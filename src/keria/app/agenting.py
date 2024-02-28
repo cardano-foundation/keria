@@ -36,7 +36,7 @@ from keri.vdr.credentialing import Regery, sendArtifacts
 from keri.vdr.eventing import Tevery
 from keri.app import challenging
 
-from . import aiding, notifying, indirecting, credentialing, ipexing, delegating
+from . import aiding, notifying, indirecting, credentialing, ipexing, delegating, tunneling
 from . import grouping as keriagrouping
 from ..peer import exchanging as keriaexchanging
 from .specing import AgentSpecResource
@@ -335,6 +335,7 @@ class Agent(doing.DoDoer):
         self.exc = exchanging.Exchanger(hby=hby, handlers=handlers)
         grouping.loadHandlers(exc=self.exc, mux=self.mux)
         protocoling.loadHandlers(hby=self.hby, exc=self.exc, notifier=self.notifier)
+        tunneling.loadHandlers(exc=self.exc, notifier=self.notifier)
         self.monitor = longrunning.Monitor(hby=hby, swain=self.swain, counselor=self.counselor, temp=hby.temp,
                                            registrar=self.registrar, credentialer=self.credentialer, exchanger=self.exc)
 
