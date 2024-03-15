@@ -1,8 +1,6 @@
 from hio.base import doing
 from keri import kering
 from keri.app import forwarding, agenting, habbing
-from keri.app.delegating import DelegateRequestHandler, delegateRequestExn
-from keri.app.notifying import Notifier
 from keri.core import coring, serdering
 from keri.db import dbing
 
