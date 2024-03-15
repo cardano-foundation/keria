@@ -1,6 +1,8 @@
 from hio.base import doing
 from keri import kering
 from keri.app import forwarding, agenting, habbing
+from keri.app.delegating import DelegateRequestHandler, delegateRequestExn
+from keri.app.notifying import Notifier
 from keri.core import coring, serdering
 from keri.db import dbing
 
@@ -41,7 +43,7 @@ class Sealer(doing.DoDoer):
 
         # load the hab of the delegated identifier to anchor
         hab = self.hby.habs[pre]
-        delpre = hab.kever.delpre  # get the delegator identifier
+        delpre = hab.kever.delegator  # get the delegator identifier
         if delpre not in hab.kevers:
             raise kering.ValidationError(f"delegator {delpre} not found, unable to process delegation")
 
@@ -126,7 +128,7 @@ class Sealer(doing.DoDoer):
         """
         for (pre, said), serder in self.hby.db.dune.getItemIter():  # group partial witness escrow
             kever = self.hby.kevers[pre]
-            dkever = self.hby.kevers[kever.delpre]
+            dkever = self.hby.kevers[kever.delegator]
 
             seal = dict(i=serder.pre, s=serder.snh, d=serder.said)
             if dserder := self.hby.db.findAnchoringSealEvent(dkever.prefixer.qb64, seal=seal):
@@ -164,5 +166,29 @@ class Sealer(doing.DoDoer):
                     if not witnessed:
                         continue
                 print(f"Witness receipts complete, {pre} confirmed.")
+
+                hab = self.hby.habs[pre]
+                if isinstance(hab, habbing.GroupHab):
+                    phab = hab.mhab
+                elif hab.kever.sn > 0:
+                    phab = hab
+                elif self.proxy is not None:
+                    phab = self.proxy
+                else:
+                    raise kering.ValidationError("no proxy to send messages for delegation")
+
+                delpre = hab.kever.delegator  # get the delegator identifier
+                if delpre not in hab.kevers:
+                    raise kering.ValidationError(f"delegator {delpre} not found, unable to process delegation")
+                smids = []
+                sn = hab.kever.sner.num
+                evt = hab.makeOwnEvent(sn=sn)
+
+                exn, atc = delegateRequestExn(phab, delpre=pre, evt=bytes(evt), aids=smids)
+
+                notifier = Notifier(hby=self.hby)
+                handler = DelegateRequestHandler(hby=self.hby, notifier=notifier)
+                handler.handle(serder=exn)
+
                 self.hby.db.dpwe.rem(keys=(pre, said))
                 self.hby.db.cdel.put(keys=(pre, seqner.qb64), val=coring.Saider(qb64=serder.said))
