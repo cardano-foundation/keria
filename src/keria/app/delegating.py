@@ -166,29 +166,5 @@ class Sealer(doing.DoDoer):
                     if not witnessed:
                         continue
                 print(f"Witness receipts complete, {pre} confirmed.")
-
-                hab = self.hby.habs[pre]
-                if isinstance(hab, habbing.GroupHab):
-                    phab = hab.mhab
-                elif hab.kever.sn > 0:
-                    phab = hab
-                elif self.proxy is not None:
-                    phab = self.proxy
-                else:
-                    raise kering.ValidationError("no proxy to send messages for delegation")
-
-                delpre = hab.kever.delegator  # get the delegator identifier
-                if delpre not in hab.kevers:
-                    raise kering.ValidationError(f"delegator {delpre} not found, unable to process delegation")
-                smids = []
-                sn = hab.kever.sner.num
-                evt = hab.makeOwnEvent(sn=sn)
-
-                exn, atc = delegateRequestExn(phab, delpre=pre, evt=bytes(evt), aids=smids)
-
-                notifier = Notifier(hby=self.hby)
-                handler = DelegateRequestHandler(hby=self.hby, notifier=notifier)
-                handler.handle(serder=exn)
-
                 self.hby.db.dpwe.rem(keys=(pre, said))
                 self.hby.db.cdel.put(keys=(pre, seqner.qb64), val=coring.Saider(qb64=serder.said))
