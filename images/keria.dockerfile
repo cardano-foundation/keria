@@ -29,7 +29,7 @@ RUN . "$HOME/.cargo/env" && \
     pip install -r requirements.txt
 
 # Runtime stage
-FROM python:3.10.13-alpine3.18
+FROM python:3.12-alpine3.19
 
 # Install runtime dependencies
 RUN apk --no-cache add \
