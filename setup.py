@@ -76,7 +76,7 @@ setup(
     python_requires='>=3.12.2',
     install_requires=[
         'hio>=0.6.12',
-        'keri @ git+https://github.com/cardano-foundation/keripy.git@f7d81dd6b74b00882cf3598f3c430cf373afc791',
+        'keri @ git+https://github.com/cardano-foundation/keripy.git@80bdbe5bf05558cca156de3be62b5574d884f6c0',
         'mnemonic>=0.20',
         'multicommand>=1.0.0',
         'falcon>=3.1.3',
