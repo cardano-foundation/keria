@@ -46,6 +46,9 @@ def loadEnds(app, identifierResource):
     credentialVerificationEnd = CredentialVerificationCollectionEnd()
     app.add_route("/credentials/verify", credentialVerificationEnd)
 
+    regStateEnd = RegistryStateCollectionEnd()
+    app.add_route("/registries/{ri}", regStateEnd)
+
 
 class RegistryCollectionEnd:
     """
@@ -468,7 +471,7 @@ class CredentialVerificationCollectionEnd:
 
         agent.parser.ims.extend(signing.serialize(creder, prefixer, seqner, saider))
         op = agent.monitor.submit(creder.said, longrunning.OpTypes.credential,
-                                  metadata=dict(ced=creder.sad))
+                                  metadata=dict(ced=creder.sad, verify=True))
         rep.status = falcon.HTTP_202
         rep.data = op.to_json().encode("utf-8")
 
@@ -1212,3 +1215,16 @@ class Credentialer:
 
         """
         self.processCredentialMissingSigEscrow()
+
+
+class RegistryStateCollectionEnd:
+    @staticmethod
+    def on_get(req, rep, ri):
+        agent = req.context.agent
+        if ri not in agent.tvy.tevers:
+            raise falcon.HTTPNotFound(description=f"registry {ri} not found")
+
+        tever = agent.tvy.tevers[ri]
+        rep.status = falcon.HTTP_200
+        rep.content_type = "application/json"
+        rep.data = json.dumps(asdict(tever.state())).encode("utf-8")

@@ -344,8 +344,6 @@ class Agent(doing.DoDoer):
         grouping.loadHandlers(exc=self.exc, mux=self.mux)
         protocoling.loadHandlers(hby=self.hby, exc=self.exc, notifier=self.notifier)
         self.submitter = Submitter(hby=hby, submits=self.submits, witRec=self.witSubmitDoer)
-        self.monitor = longrunning.Monitor(hby=hby, swain=self.swain, counselor=self.counselor, temp=hby.temp,
-                                           registrar=self.registrar, credentialer=self.credentialer, submitter=self.submitter, exchanger=self.exc)
 
         self.rvy = routing.Revery(db=hby.db, cues=self.cues)
         self.kvy = eventing.Kevery(db=hby.db,
@@ -358,7 +356,13 @@ class Agent(doing.DoDoer):
         self.tvy = Tevery(reger=self.verifier.reger,
                           db=hby.db,
                           local=False,
-                          cues=self.cues)
+                          cues=self.cues,
+                          rvy=self.rvy,
+                          lax=True)
+
+        self.monitor = longrunning.Monitor(hby=hby, swain=self.swain, counselor=self.counselor, temp=hby.temp,
+                                           registrar=self.registrar, credentialer=self.credentialer, submitter=self.submitter, exchanger=self.exc,
+                                           tvy=self.tvy)
 
         self.tvy.registerReplyRoutes(router=self.rvy.rtr)
         self.parser = parsing.Parser(framed=True,
@@ -371,7 +375,7 @@ class Agent(doing.DoDoer):
 
         doers.extend([
             Initer(agentHab=agentHab, caid=caid, tock=self.tocks.get("initer", 0.0)),
-            Querier(hby=hby, agentHab=agentHab, kvy=self.kvy, queries=self.queries,
+            Querier(hby=hby, agentHab=agentHab, tvy=self.tvy, kvy=self.kvy, queries=self.queries,
                     tock=self.tocks.get("querier", 0.0)),
             Escrower(kvy=self.kvy, rgy=self.rgy, rvy=self.rvy, tvy=self.tvy, exc=self.exc, vry=self.verifier,
                      registrar=self.registrar, credentialer=self.credentialer, tock=self.tocks.get("escrower", 0.0)),
@@ -711,11 +715,12 @@ class GroupRequester(doing.Doer):
 
 class Querier(doing.DoDoer):
 
-    def __init__(self, hby, agentHab, queries, kvy, tock=0.0):
+    def __init__(self, hby, agentHab, queries, kvy, tvy, tock=0.0):
         self.hby = hby
         self.agentHab = agentHab
         self.queries = queries
         self.kvy = kvy
+        self.tvy = tvy
         self.tock = tock
         super(Querier, self).__init__(always=True, tock=self.tock)
 
@@ -736,6 +741,11 @@ class Querier(doing.DoDoer):
                 anchor = msg['anchor']
                 anchorDo = querying.AnchorQuerier(hby=self.hby, hab=self.agentHab, pre=pre, anchor=anchor)
                 self.extend([anchorDo])
+            elif "ri" in msg:
+                ri = msg['ri']
+                i = msg['i'] if 'i' in msg else None
+                qryDo = querying.TelStateNoticer(hby=self.hby, hab=self.agentHab, pre=pre, kvy=self.kvy, tvy=self.tvy, ri=ri, i=i)
+                self.extend([qryDo])
             else:
                 qryDo = querying.QueryDoer(hby=self.hby, hab=self.agentHab, pre=pre, kvy=self.kvy)
                 self.extend([qryDo])
@@ -1225,6 +1235,14 @@ class QueryCollectionEnd:
         elif "sn" in body:
             qry["sn"] = body["sn"]
             oid = f"{pre}.{body["sn"]}"
+        elif "ri" in body:
+            qry["ri"] = oid = body["ri"]
+            if "i" in body:
+                qry["i"] = oid = body["i"]
+
+            for (keys, saider) in agent.rgy.reger.txnsb.saiderdb.getItemIter(keys=(oid,)):
+                agent.rgy.reger.txnsb.saiderdb.rem(keys)
+                agent.rgy.reger.txnsb.removeState(saider)
         else:  # Must reset key state so we know when we have a new update.
             for (keys, saider) in agent.hby.db.knas.getItemIter(keys=(pre,)):
                 agent.hby.db.knas.rem(keys)

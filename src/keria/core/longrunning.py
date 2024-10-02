@@ -15,6 +15,7 @@ from keri import kering
 from keri.app.oobiing import Result
 from keri.core import eventing, coring, serdering
 from keri.db import dbing, koming
+from keri.vdr import viring
 from keri.help import helping
 
 from keria.app import delegating
@@ -94,8 +95,8 @@ class Monitor:
 
     """
 
-    def __init__(self, hby, swain, counselor=None, registrar=None, exchanger=None, credentialer=None, submitter=None, opr=None,
-                 temp=False):
+    def __init__(self, hby, swain, counselor=None, registrar=None, exchanger=None, credentialer=None, submitter=None,
+                 tvy=None, opr=None, temp=False):
         """ Create long running operation monitor
 
         Parameters:
@@ -111,6 +112,7 @@ class Monitor:
         self.exchanger = exchanger
         self.credentialer = credentialer
         self.submitter = submitter
+        self.tvy = tvy
         self.opr = opr if opr is not None else Operator(name=hby.name, temp=temp)
 
     def submit(self, oid, typ, metadata=None):
@@ -331,6 +333,39 @@ class Monitor:
                         operation.response = asdict(kever.state())
                     else:
                         operation.done = False
+                elif "ri" in op.metadata:
+                    operation.done = True
+                    ri = op.metadata["ri"]
+
+                    tsn = None
+                    key = ri if "i" not in op.metadata else op.metadata["i"]
+                    for (_, saider) in self.registrar.rgy.reger.txnsb.saiderdb.getItemIter(keys=(key,)):
+                        serder = self.registrar.rgy.reger.txnsb.serderdb.get(keys=(saider.qb64,))
+                        data = serder.ked["a"]
+
+                        if "i" in op.metadata and serder.ked["r"].startswith("/tsn/credential"):
+                            tsn = viring.VcStateRecord._fromdict(d=data)
+                            break
+                        elif "i" not in op.metadata and serder.ked["r"].startswith("/tsn/registry"):
+                            tsn = viring.RegStateRecord._fromdict(d=data)
+                            break
+
+                    if tsn and isinstance(tsn, viring.RegStateRecord) and ri in self.tvy.tevers:
+                        tever = self.tvy.tevers[ri]
+                        if int(tsn.s, 16) == tever.sn:
+                            operation.done = True
+                            operation.response = asdict(tever.state())
+                        else:
+                            operation.done = False
+                    elif tsn and isinstance(tsn, viring.VcStateRecord) and ri in self.tvy.tevers:
+                        tever = self.tvy.tevers[ri]
+                        if int(tsn.s, 16) == tever.vcSn(op.metadata["i"]):
+                            operation.done = True
+                            operation.response = asdict(tever.vcState(op.metadata["i"]))
+                        else:
+                            operation.done = False
+                    else:
+                        operation.done = False
                 else:
                     ksn = None
                     for (_, saider) in self.hby.db.knas.getItemIter(keys=(pre,)):
@@ -366,11 +401,18 @@ class Monitor:
                     f"invalid long running {op.type} operation, metadata missing 'ced' field")
 
             ced = op.metadata["ced"]
-            if self.credentialer.complete(ced['d']):
-                operation.done = True
-                operation.response = dict(ced=ced)
+            if "verify" in op.metadata and op.metadata["verify"]:
+                if self.registrar.rgy.reger.saved.get(keys=(ced["d"],)) is not None:
+                    operation.done = True
+                    operation.response = dict(ced=ced)
+                else:
+                    operation.done = False
             else:
-                operation.done = False
+                if self.credentialer.complete(ced['d']):
+                    operation.done = True
+                    operation.response = dict(ced=ced)
+                else:
+                    operation.done = False
 
         elif op.type in (OpTypes.exchange,):
             if self.exchanger.complete(op.oid):
