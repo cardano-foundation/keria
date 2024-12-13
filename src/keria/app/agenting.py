@@ -4,6 +4,7 @@ KERIA
 keria.app.agenting module
 
 """
+from base64 import b64decode
 import json
 import os
 import datetime
@@ -53,10 +54,11 @@ logger = ogler.getLogger()
 
 
 def setup(name, bran, adminPort, bootPort, base='', httpPort=None, configFile=None, configDir=None,
-          keypath=None, certpath=None, cafilepath=None):
+          keypath=None, certpath=None, cafilepath=None, cors=False, releaseTimeout=None, curls=None,
+          iurls=None, durls=None, bootUsername=None, bootPassword=None):
     """ Set up an ahab in Signify mode """
 
-    agency = Agency(name=name, base=base, bran=bran, configFile=configFile, configDir=configDir)
+    agency = Agency(name=name, base=base, bran=bran, configFile=configFile, configDir=configDir, releaseTimeout=releaseTimeout, curls=curls, iurls=iurls, durls=durls)
     bootApp = falcon.App(middleware=falcon.CORSMiddleware(
         allow_origins='*', allow_credentials='*',
         expose_headers=['cesr-attachment', 'cesr-date', 'content-type', 'signature', 'signature-input',
@@ -66,7 +68,7 @@ def setup(name, bran, adminPort, bootPort, base='', httpPort=None, configFile=No
     if not bootServer.reopen():
         raise RuntimeError(f"cannot create boot http server on port {bootPort}")
     bootServerDoer = http.ServerDoer(server=bootServer)
-    bootEnd = BootEnd(agency)
+    bootEnd = BootEnd(agency, username=bootUsername, password=bootPassword)
     bootApp.add_route("/boot", bootEnd)
     bootApp.add_route("/health", HealthEnd())
 
@@ -77,7 +79,7 @@ def setup(name, bran, adminPort, bootPort, base='', httpPort=None, configFile=No
         allow_origins='*', allow_credentials='*',
         expose_headers=['cesr-attachment', 'cesr-date', 'content-type', 'signature', 'signature-input',
                         'signify-resource', 'signify-timestamp']))
-    if os.getenv("KERI_AGENT_CORS", "false").lower() in ("true", "1"):
+    if cors:
         app.add_middleware(middleware=httping.HandleCORS())
     app.add_middleware(authing.SignatureValidationComponent(agency=agency, authn=authn, allowed=["/agent"]))
     app.req_options.media_handlers.update(media.Handlers())
@@ -157,7 +159,7 @@ class Agency(doing.DoDoer):
 
     """
 
-    def __init__(self, name, bran, base="", configFile=None, configDir=None, adb=None, temp=False):
+    def __init__(self, name, bran, base="", releaseTimeout=None, configFile=None, configDir=None, adb=None, temp=False, curls=None, iurls=None, durls=None):
         self.name = name
         self.base = base
         self.bran = bran
@@ -165,7 +167,11 @@ class Agency(doing.DoDoer):
         self.configFile = configFile
         self.configDir = configDir
         self.cf = None
-        if self.configFile is not None:  # Load config file if creating database
+        self.curls = curls
+        self.iurls = iurls
+        self.durls = durls
+
+        if self.configFile is not None:
             self.cf = configing.Configer(name=self.configFile,
                                          base="",
                                          headDirPath=self.configDir,
@@ -176,7 +182,7 @@ class Agency(doing.DoDoer):
         self.agents = dict()
 
         self.adb = adb if adb is not None else basing.AgencyBaser(name="TheAgency", base=base, reopen=True, temp=temp)
-        super(Agency, self).__init__(doers=[Releaser(self)], always=True)
+        super(Agency, self).__init__(doers=[Releaser(self, releaseTimeout=releaseTimeout)], always=True)
 
     def create(self, caid, salt=None):
         ks = keeping.Keeper(name=caid,
@@ -184,32 +190,42 @@ class Agency(doing.DoDoer):
                             temp=self.temp,
                             reopen=True)
 
-        cf = None
-        if self.cf is not None:  # Load config file if creating database
-            data = dict(self.cf.get())
-            if "keria" in data:
-                curls = data["keria"]
-                data[f"agent-{caid}"] = curls
-                del data["keria"]
+        timestamp = nowIso8601()
+        data = dict(self.cf.get() if self.cf is not None else { "dt": timestamp })
 
-            cf = configing.Configer(name=f"{caid}",
-                                    base="",
-                                    human=False,
-                                    temp=self.temp,
-                                    reopen=True,
-                                    clear=False)
-            cf.put(data)
+        habName = f"agent-{caid}"
+        if "keria" in data:
+            data[habName] = data["keria"]
+            del data["keria"]
+
+        if self.curls is not None and isinstance(self.curls, list):
+            data[habName] = { "dt": timestamp, "curls": self.curls }
+
+        if self.iurls is not None and isinstance(self.iurls, list):
+            data["iurls"] = self.iurls
+
+        if self.durls is not None and isinstance(self.durls, list):
+            data["durls"] = self.durls
+
+        config = configing.Configer(name=f"{caid}",
+                                base="",
+                                human=False,
+                                temp=self.temp,
+                                reopen=True,
+                                clear=False)
+
+        config.put(data)
 
         # Create the Hab for the Agent with only 2 AIDs
-        agentHby = habbing.Habery(name=caid, base=self.base, bran=self.bran, ks=ks, cf=cf, temp=self.temp, salt=salt)
-        agentHab = agentHby.makeHab(f"agent-{caid}", ns="agent", transferable=True, delpre=caid)
+        agentHby = habbing.Habery(name=caid, base=self.base, bran=self.bran, ks=ks, cf=config, temp=self.temp, salt=salt)
+        agentHab = agentHby.makeHab(habName, ns="agent", transferable=True, delpre=caid)
         agentRgy = Regery(hby=agentHby, name=agentHab.name, base=self.base, temp=self.temp)
 
-        agent = Agent(agentHby, agentRgy, agentHab,
+        agent = Agent(hby=agentHby,
+                      rgy=agentRgy,
+                      agentHab=agentHab,
                       caid=caid,
-                      agency=self,
-                      configDir=self.configDir,
-                      configFile=self.configFile)
+                      agency=self)
 
         self.adb.agnt.pin(keys=(caid,),
                           val=coring.Prefixer(qb64=agent.pre))
@@ -804,17 +820,17 @@ class Escrower(doing.Doer):
         return False
     
 class Releaser(doing.Doer):
-    KERIAReleaserTimeOut = "KERIA_RELEASER_TIMEOUT"
-    TimeoutRel = int(os.getenv(KERIAReleaserTimeOut, "86400"))
-    def __init__(self, agency):
-        """ Check open agents and close if idle for more than TimeoutRel seconds
+    def __init__(self, agency: Agency, releaseTimeout=86400):
+        """ Check open agents and close if idle for more than releaseTimeout seconds
         Parameters:
             agency (Agency): KERIA agent manager
+            releaseTimeout (int): Timeout in seconds
  
         """
         self.tock = 60.0
         self.agents = agency.agents
         self.agency = agency
+        self.releaseTimeout = releaseTimeout
 
         super(Releaser, self).__init__(tock=self.tock)
 
@@ -823,7 +839,7 @@ class Releaser(doing.Doer):
             idle = []
             for caid in self.agents:
                 now = helping.nowUTC()
-                if (now - self.agents[caid].last) > datetime.timedelta(seconds=self.TimeoutRel):
+                if (now - self.agents[caid].last) > datetime.timedelta(seconds=self.releaseTimeout):
                     idle.append(caid)
 
             for caid in idle:
@@ -857,17 +873,44 @@ def loadEnds(app):
 class BootEnd:
     """ Resource class for creating datastore in cloud ahab """
 
-    def __init__(self, agency):
+    def __init__(self, agency: Agency, username: str | None = None, password: str | None = None):
         """ Provides endpoints for initializing and unlocking an agent
-
         Parameters:
             agency (Agency): Agency for managing agents
-
+            username (str): username for boot request
+            password (str): password for boot request
         """
-        self.authn = authing.Authenticater(agency=agency)
+        self.username = username
+        self.password = password
         self.agency = agency
 
-    def on_post(self, req, rep):
+    def authenticate(self, req: falcon.Request):
+        # Username AND Password is not set, so no need to authenticate
+        if self.username is None and self.password is None:
+            return
+
+        if req.auth is None:
+            raise falcon.HTTPUnauthorized(title="Unauthorized")
+
+        scheme, token = req.auth.split(' ')
+        if scheme != 'Basic':
+            raise falcon.HTTPUnauthorized(title="Unauthorized")
+
+        try:
+            username, password = b64decode(token).decode('utf-8').split(':')
+
+            if username is None or password is None:
+                raise falcon.HTTPUnauthorized(title="Unauthorized")
+
+            if username == self.username and password == self.password:
+                return
+
+        except Exception:
+            raise falcon.HTTPUnauthorized(title="Unauthorized")
+
+        raise falcon.HTTPUnauthorized(title="Unauthorized")
+
+    def on_post(self, req: falcon.Request, rep: falcon.Response):
         """ Inception event POST endpoint
 
         Give me a new Agent.  Create Habery using ctrlPRE as database name, agentHab that anchors the caid and
@@ -878,6 +921,8 @@ class BootEnd:
             rep (Response): falcon.Response HTTP response object
 
         """
+
+        self.authenticate(req)
 
         body = req.get_media()
         if "icp" not in body:

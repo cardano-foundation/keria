@@ -487,6 +487,31 @@ def test_credentialing_ends(helpers, seeder):
         assert res.json == {'description': f"registry EBVaw6pCqfMIiZGkA6qevzRUGsxTRuZXxl6YG1neeCGF not found",
                             'title': '404 Not Found'}
 
+        res = client.simulate_delete(f"/credentials/doesnotexist")
+        assert res.status_code == 404
+        assert res.json == {'description': f"credential for said doesnotexist not found.",
+                            'title': '404 Not Found'}
+
+        res = client.simulate_delete(f"/credentials/{saids[0]}")
+        assert res.status_code == 204
+
+        res = client.simulate_get(f"/credentials/{saids[0]}")
+        assert res.status_code == 404
+        assert res.json == {'description': f"credential for said EIO9uC3K6MvyjFD-RB3RYW3dfL49kCyz3OPqv3gi1dek not found.",
+                            'title': '404 Not Found'}
+
+        res = client.simulate_post(f"/credentials/query")
+        assert res.status_code == 200
+        assert len(res.json) == 4
+
+        # Check db directly to make sure all indices are gone too (GET endpoints don't cover all indices)
+        assert agent.rgy.reger.creds.get(keys=saids[0]) is None
+        assert agent.rgy.reger.cancs.get(keys=saids[0]) is None
+        assert agent.rgy.reger.saved.get(keys=saids[0]) is None
+        assert agent.rgy.reger.issus.cnt(keys=hab.pre) == 4
+        assert agent.rgy.reger.schms.cnt(keys="EFgnk_c08WmZGgv9_mpldibRuqFMTQN-rAgtD-TCOwbs") == 1
+        assert agent.rgy.reger.subjs.cnt(keys=issuee) == 4
+
 
 def test_revoke_credential(helpers, seeder):
     with helpers.openKeria() as (agency, agent, app, client):
