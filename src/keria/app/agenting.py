@@ -1274,7 +1274,9 @@ class OOBICollectionEnd:
 
         """
         agent = req.context.agent
+        print(f"Getting body on /oobi")
         body = req.get_media()
+        print(f"Body is {body}")
 
         if "url" in body:
             oobi = body["url"]
