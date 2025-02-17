@@ -520,6 +520,8 @@ class Agent(doing.DoDoer):
                                      rvy=self.rvy,
                                      vry=self.verifier,
                                      local=True)  # disable misfit escrow until we can add another parser for remote.
+        self.exchangeCueDoer = ExchangeCueDoer(hby=hby, agentHab=agentHab, parser=self.parser, seeker=self.exnseeker, cues=self.exc.cues, queries=self.queries,
+                            tock=self.tocks.get("exchangecue", 0.0))
 
         doers.extend([
             Initer(agentHab=agentHab, caid=caid, tock=self.tocks.get("initer", 0.0)),
@@ -539,8 +541,7 @@ class Agent(doing.DoDoer):
             GroupRequester(hby=hby, agentHab=agentHab, counselor=self.counselor, groups=self.groups,
                            tock=self.tocks.get("groupRequester", 0.0)),
             SeekerDoer(seeker=self.seeker, cues=self.verifier.cues, tock=self.tocks.get("seeker", 0.0)),
-            ExchangeCueDoer(seeker=self.exnseeker, cues=self.exc.cues, queries=self.queries,
-                            tock=self.tocks.get("exchangecue", 0.0)),
+            self.exchangeCueDoer,
             self.submitter,
         ])
 
@@ -661,7 +662,7 @@ class ExchangeSender(doing.DoDoer):
                 atc = exchanging.serializeMessage(self.hby, said)
                 del atc[:serder.size]
                 for recp in rec:
-                    postman = forwarding.StreamPoster(hby=self.hby, hab=self.agentHab, recp=recp, topic=topic)
+                    postman = forwarding.StreamPoster(hby=self.hby, hab=self.agentHab, recp=recp, topic=topic, essr=True)
                     try:
                         postman.send(serder=serder,
                                      attachment=atc)
@@ -700,7 +701,7 @@ class Granter(doing.DoDoer):
             hab = self.hby.habs[pre]
             if self.exc.lead(hab, said=said):
                 for recp in rec:
-                    postman = forwarding.StreamPoster(hby=self.hby, hab=self.agentHab, recp=recp, topic="credential")
+                    postman = forwarding.StreamPoster(hby=self.hby, hab=self.agentHab, recp=recp, topic="credential", essr=True)
                     try:
                         credSaid = serder.ked['e']['acdc']['d']
                         creder = self.rgy.reger.creds.get(keys=(credSaid,))
@@ -794,7 +795,10 @@ class SeekerDoer(doing.Doer):
 
 class ExchangeCueDoer(doing.Doer):
 
-    def __init__(self, seeker, cues, queries, tock=0.0):
+    def __init__(self, hby, agentHab, parser, seeker, cues, queries, tock=0.0):
+        self.hby = hby
+        self.agentHab = agentHab
+        self.parser = parser
         self.seeker = seeker
         self.cues = cues
         self.queries = queries
@@ -806,7 +810,23 @@ class ExchangeCueDoer(doing.Doer):
             cue = self.cues.popleft()
             if cue["kin"] == "saved":
                 said = cue["said"]
+
                 try:
+                    exn = self.hby.db.exns.get(keys=(said,))
+                    if exn.ked["r"] == "/essr/req" and exn.ked["q"] is not None and exn.ked["q"]["dest"] == self.agentHab.pre:
+                        texters = self.hby.db.essrs.get(keys=(said,))
+                        for texter in texters:
+                            ims = bytearray(self.agentHab.decrypt(ser=texter.raw))
+                            tag = parsing.Parser.extract(ims, coring.Tsper)
+                            pre = parsing.Parser.extract(ims, coring.Prefixer)
+
+                            if exn.ked["i"] != pre.qb64:
+                                logger.debug(f"ESSR texter encrypted sender {pre.qb64} does not match ESSR group sender {exn.ked["i"]}, skipping")
+                                return False
+
+                            if tag.tag == coring.Tsps.SCS:
+                                self.parser.ims.extend(ims)
+
                     self.seeker.index(said=said)
                 except Exception:
                     self.cues.append(cue)
