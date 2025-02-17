@@ -86,9 +86,6 @@ class Authenticator:
 
         plaintext = agent.agentHab.decrypt(ser=cipher).decode("utf-8")
         environ = buildEnviron(plaintext)
-        print(f"Unwrapped request: {plaintext}")
-        for key, value in environ.items():
-            print(f"{key}: {value}")
 
         # ESSR "Encrypt Sender"
         if "HTTP_SIGNIFY_RESOURCE" not in environ or environ["HTTP_SIGNIFY_RESOURCE"] != resource:
