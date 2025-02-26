@@ -244,7 +244,7 @@ class Monitor:
 
             elif obr.state == Result.failed:
                 operation.done = True
-                operation.failed = Status(code=500,
+                operation.error = Status(code=500,
                                           message=f"resolving OOBI {op.oid} failed")
             else:
                 operation.done = False
