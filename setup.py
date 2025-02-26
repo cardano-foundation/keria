@@ -101,7 +101,7 @@ setup(
         'pytest>=8.3.4',
     ],
     setup_requires=[
-        'setuptools==75.8.0'
+        'setuptools==75.8.1'
     ],
     entry_points={
         'console_scripts': [
