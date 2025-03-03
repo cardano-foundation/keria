@@ -389,7 +389,7 @@ class ExnSeeker(dbing.LMDBer):
 
     def saidIter(self):
         for (said,), _ in self.db.exns.getItemIter():
-            yield said
+            yield said, coring.Saider(qb64=said)
 
     def createIndex(self, key):
         self.indexes[key] = subing.CesrDupSuber(db=self, subkey=key, klas=coring.Saider)
