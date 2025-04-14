@@ -449,11 +449,13 @@ class Agent(doing.DoDoer):
         self.counselor = Counselor(hby=hby, swain=self.swain, proxy=agentHab)
         self.org = connecting.Organizer(hby=hby)
 
-        oobiery = oobiing.Oobiery(hby=hby)
+        self.cues = decking.Deck()
+        self.rvy = routing.Revery(db=hby.db, cues=self.cues)
+        oobiery = oobiing.Oobiery(hby=hby, rvy=self.rvy)
 
         self.mgr = RemoteManager(hby=hby)
 
-        self.cues = decking.Deck()
+        # self.cues = decking.Deck()
         self.groups = decking.Deck()
         self.anchors = decking.Deck()
         self.witners = decking.Deck()
@@ -462,6 +464,7 @@ class Agent(doing.DoDoer):
         self.grants = decking.Deck()
         self.admits = decking.Deck()
         self.submits = decking.Deck()
+        self.introduces = decking.Deck()
 
         receiptor = agenting.Receiptor(hby=hby)
         self.witq = agenting.WitnessInquisitor(hby=self.hby)
@@ -499,7 +502,7 @@ class Agent(doing.DoDoer):
         self.monitor = longrunning.Monitor(hby=hby, swain=self.swain, counselor=self.counselor, temp=hby.temp,
                                            registrar=self.registrar, credentialer=self.credentialer, submitter=self.submitter, exchanger=self.exc)
 
-        self.rvy = routing.Revery(db=hby.db, cues=self.cues)
+        # self.rvy = routing.Revery(db=hby.db, cues=self.cues)
         self.kvy = eventing.Kevery(db=hby.db,
                                    lax=True,
                                    local=False,
@@ -531,6 +534,8 @@ class Agent(doing.DoDoer):
             Witnesser(receiptor=receiptor, witners=self.witners, tock=self.tocks.get("witnesser", 0.0)),
             Delegator(agentHab=agentHab, swain=self.swain, anchors=self.anchors, tock=self.tocks.get("delegator", 0.0)),
             ExchangeSender(hby=hby, agentHab=agentHab, exc=self.exc, exchanges=self.exchanges,
+                           tock=self.tocks.get("exchangeSender", 0.0)),
+            Introducer(hby=hby, agentHab=agentHab, introduces=self.introduces,
                            tock=self.tocks.get("exchangeSender", 0.0)),
             Granter(hby=hby, rgy=rgy, agentHab=agentHab, exc=self.exc, grants=self.grants,
                     tock=self.tocks.get("granter", 0.0)),
@@ -934,14 +939,14 @@ class Escrower(doing.Doer):
         self.registrar.processEscrows()
         self.credentialer.processEscrows()
         return False
-    
+
 class Releaser(doing.Doer):
     def __init__(self, agency: Agency, releaseTimeout=86400):
         """ Check open agents and close if idle for more than releaseTimeout seconds
         Parameters:
             agency (Agency): KERIA agent manager
             releaseTimeout (int): Timeout in seconds
- 
+
         """
         self.tock = 60.0
         self.agents = agency.agents
@@ -981,6 +986,9 @@ def loadEnds(app):
 
     queryEnd = QueryCollectionEnd()
     app.add_route("/queries", queryEnd)
+
+    introductionEnd = IntroductionEnd()
+    app.add_route("/introduce", introductionEnd)
 
     configEnd = ConfigResourceEnd()
     app.add_route("/config", configEnd)
@@ -1527,3 +1535,46 @@ class ConfigResourceEnd:
         rep.status = falcon.HTTP_200
         rep.content_type = "application/json"
         rep.data = json.dumps(subset).encode("utf-8")
+
+class Introducer(doing.DoDoer):
+
+    def __init__(self, hby, agentHab, introduces, tock=0.0):
+        self.hby = hby
+        self.agentHab = agentHab
+        self.introduces = introduces
+        self.tock = tock
+        super(Introducer, self).__init__(always=True, tock=self.tock)
+
+    def recur(self, tyme, deeds=None):
+        if self.introduces:
+            msg = self.introduces.popleft()
+            ims = f"{msg['rpy']}".encode("utf-8")
+            serder = serdering.SerderKERI(raw=bytes(ims))
+            atc = ims[serder.size:]
+            postman = forwarding.StreamPoster(hby=self.hby, hab=self.agentHab, recp=msg['rec'], topic="credential")
+
+            try:
+                postman.send(serder=serder,
+                                attachment=atc)
+            except Exception as ex:
+                logger.info(f"unable to send to recipient={msg['rec']}: {ex}")
+            else:
+                doer = doing.DoDoer(doers=postman.deliver())
+                self.extend([doer])
+
+        return super(Introducer, self).recur(tyme, deeds)
+
+class IntroductionEnd:
+    @staticmethod
+    def on_post(req, rep):
+        agent = req.context.agent
+        body = req.get_media()
+        rec = httping.getRequiredParam(body, "rec")
+        rpy = httping.getRequiredParam(body, "rpy")
+        data = dict(rec=rec, rpy=rpy)
+
+        agent.introduces.append(data)
+
+        rep.status = falcon.HTTP_202
+        rep.content_type = "application/json"
+        rep.data = json.dumps(data).encode("utf-8")
