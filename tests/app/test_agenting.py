@@ -30,6 +30,7 @@ from keri.core.coring import MtrDex
 from keri.db import basing, dbing
 from keri.help import nowIso8601
 from keri.vdr import credentialing
+from keri.kering import Roles
 
 from keria.app import agenting, aiding
 from keria.core import longrunning
@@ -375,7 +376,7 @@ def test_unprotected_boot_ends(helpers):
 
 def test_protected_boot_ends(helpers):
     credentials = [
-        dict(bran=b'0123456789abcdefghija', username="user", password="secret"), 
+        dict(bran=b'0123456789abcdefghija', username="user", password="secret"),
         dict(bran=b'0123456789abcdefghijb', username="admin", password="secret with spaces"),
         dict(bran=b'0123456789abcdefghijc', username="admin", password="secret : with colon")
     ]
@@ -788,7 +789,7 @@ def test_submitter(seeder, helpers):
     ) as wesHby, habbing.openHby(
         name="wan", salt=core.Salter(raw=b"wann-the-witness").qb64, temp=True
     ) as wanHby:
-        
+
         wesHab = wesHby.makeHab(name="wes", transferable=False)
         assert not wesHab.kever.prefixer.transferable
 
@@ -841,7 +842,7 @@ def test_submitter(seeder, helpers):
         assert len(wesHab.kvy.cues) == 0  # witness cues are empty
         assert hab.pre in wesHab.kvy.kevers  # id key state in wit hab
         assert hab.pre not in wanHab.kvy.kevers  # id key state not in wit hab yet
-        
+
         witAidOp = client.simulate_get(path=f'/operations/{createAidOp["name"]}') # witnessing of created aid completed
         assert witAidOp.json["done"] is True # succeed because toad is 1
         assert witAidOp.json["response"]["i"] == hab.pre
@@ -883,7 +884,7 @@ def test_submitter(seeder, helpers):
         doers = wanDoers + [rectDoer]
         doist.do(doers=doers)
         doist.recur()
-        
+
         assert hab.pre in wanHab.kvy.kevers  # id key state in wit hab
         assert wanHab.kvy.kevers[hab.pre].sn == 0
         wanHab.processCues(wanHab.kvy.cues)  # process cue returns rct msg
@@ -946,3 +947,65 @@ def test_config_ends(helpers):
         assert res.status == falcon.HTTP_200
         assert res.json == {'iurls':
                             ['http://127.0.0.1:5642/oobi/BBilc4-L3tFUnfM_wJr4S4OJanAv_VmF_dJNN6vkf2Ha/controller&tag=witness']}
+
+def test_reply_sender(helpers):
+    with helpers.openKeria(salter=core.Salter(raw=b'0123456789abcM00')) as (agency, agent, app, client), \
+            helpers.openKeria() as (recAgency, recAgent, recApp, recClient):
+        recAgency.adb.ctrl.pin(keys=recAgent.pre, val=coring.Prefixer(qb64="EK35JRNdfVkO4JwhXaSTdV4qzB_ibk_tGJmSVcY4pZqx"))
+        serverDoer = helpers.server(recAgency)
+
+        tock = 0.03125
+        doist = doing.Doist(tock=tock, real=True)
+        deeds = doist.enter(doers=[agent, recAgent, serverDoer])
+
+        aidColEnd = aiding.IdentifierCollectionEnd()
+        recApp.add_route("/identifiers", aidColEnd)
+        endRolesEnd = aiding.EndRoleCollectionEnd()
+        recApp.add_route("/identifiers/{name}/endroles", endRolesEnd)
+
+        rsalt = b'abcdef0123456789'
+        op = helpers.createAid(recClient, "recipient", rsalt)
+        recp = op["response"]['i']
+        assert recp == "EMgdjM1qALk3jlh4P2YyLRSTcjSOjLXD3e_uYpxbdbg6"
+
+        helpers.createEndRole(recClient, recAgent, recp, "recipient", rsalt)
+
+        recHab = recAgent.hby.habByName("recipient")
+        agent.parser.parse(ims=bytearray(recHab.replyToOobi(recp, role=Roles.agent)))
+        agent.hby.db.locs.put(keys=("EI7AkI40M11MS7lkTCb10JC9-nDt-tXwQh44OHAFlv_9", kering.Schemes.http),
+                              val=basing.LocationRecord(url="http://127.0.0.1:3902"))
+
+        replyCollectionEnd = agenting.ReplyCollectionEnd()
+        app.add_route("/replies", replyCollectionEnd)
+
+        result = client.simulate_post(path="/replies")
+        assert result.status == falcon.HTTP_400
+
+        result = client.simulate_post(path="/replies", body=json.dumps(dict()))
+        assert result.status == falcon.HTTP_400
+
+        result = client.simulate_post(path="/replies", body=json.dumps(dict(rec=recp)))
+        assert result.status == falcon.HTTP_400
+
+        hab = agent.hby.makeHab(name="sender", transferable=False)
+        msg = hab.reply(route="/introduce", data=dict(
+            cid=hab.pre,
+            oobi="http://testoobi.com"
+        ))
+
+        result = client.simulate_post(path="/replies", body=json.dumps(dict(rpy=msg.decode("utf-8"))))
+        assert result.status == falcon.HTTP_400
+
+        result = client.simulate_post(path="/replies", body=json.dumps(dict(rec="EM5FfJG8R7Xy126ex3jNXusJjVDfdrSiBAW6EbQzFMGP", rpy=msg.decode("utf-8"))))
+        assert result.status == falcon.HTTP_400
+        assert result.json == {'description': 'attempt to send to unknown AID=EM5FfJG8R7Xy126ex3jNXusJjVDfdrSiBAW6EbQzFMGP',
+                               'title': '400 Bad Request'}
+
+        result = client.simulate_post(path="/replies", body=json.dumps(dict(rec=recp, rpy=msg.decode("utf-8"))))
+        assert result.status_code == 202
+        assert len(agent.replies) == 1
+
+        while recAgent.hby.db.oobis.get(keys="http://testoobi.com") is None:
+            doist.recur(deeds=deeds)
+
+        assert len(agent.replies) == 0
