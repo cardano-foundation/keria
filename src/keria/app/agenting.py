@@ -451,11 +451,12 @@ class Agent(doing.DoDoer):
         self.counselor = Counselor(hby=hby, swain=self.swain, proxy=agentHab)
         self.org = connecting.Organizer(hby=hby)
 
-        oobiery = oobiing.Oobiery(hby=hby)
+        self.cues = decking.Deck()
+        self.rvy = routing.Revery(db=hby.db, cues=self.cues)
+        oobiery = oobiing.Oobiery(hby=hby, rvy=self.rvy)
 
         self.mgr = RemoteManager(hby=hby)
 
-        self.cues = decking.Deck()
         self.groups = decking.Deck()
         self.anchors = decking.Deck()
         self.witners = decking.Deck()
@@ -464,6 +465,7 @@ class Agent(doing.DoDoer):
         self.grants = decking.Deck()
         self.admits = decking.Deck()
         self.submits = decking.Deck()
+        self.replies = decking.Deck()
 
         receiptor = agenting.Receiptor(hby=hby)
         self.witq = agenting.WitnessInquisitor(hby=self.hby)
@@ -501,7 +503,6 @@ class Agent(doing.DoDoer):
         self.monitor = longrunning.Monitor(hby=hby, swain=self.swain, counselor=self.counselor, temp=hby.temp,
                                            registrar=self.registrar, credentialer=self.credentialer, submitter=self.submitter, exchanger=self.exc)
 
-        self.rvy = routing.Revery(db=hby.db, cues=self.cues)
         self.kvy = eventing.Kevery(db=hby.db,
                                    lax=True,
                                    local=False,
@@ -536,6 +537,8 @@ class Agent(doing.DoDoer):
             Delegator(agentHab=agentHab, swain=self.swain, anchors=self.anchors, tock=self.tocks.get("delegator", 0.0)),
             ExchangeSender(hby=hby, agentHab=agentHab, exc=self.exc, exchanges=self.exchanges,
                            tock=self.tocks.get("exchangeSender", 0.0)),
+            ReplySender(hby=hby, agentHab=agentHab, replies=self.replies,
+                       tock=self.tocks.get("replySender", 0.0)),
             Granter(hby=hby, rgy=rgy, agentHab=agentHab, exc=self.exc, grants=self.grants,
                     tock=self.tocks.get("granter", 0.0)),
             Admitter(hby=hby, witq=self.witq, psr=self.parser, agentHab=agentHab, exc=self.exc, admits=self.admits,
@@ -675,6 +678,85 @@ class ExchangeSender(doing.DoDoer):
                         self.extend([doer])
 
         return super(ExchangeSender, self).recur(tyme, deeds)
+
+
+class ReplySender(doing.DoDoer):
+
+    def __init__(self, hby, agentHab, replies, tock=0.0):
+        self.hby = hby
+        self.agentHab = agentHab
+        self.replies = replies
+        self.tock = tock
+        super(ReplySender, self).__init__(always=True, tock=self.tock)
+
+    def recur(self, tyme, deeds=None):
+        if self.replies:
+            msg = self.replies.popleft()
+            ims = msg['rpy'].encode('utf-8')
+            postman = forwarding.StreamPoster(hby=self.hby, hab=self.agentHab, recp=msg['rec'], topic='reply')
+
+            serder = serdering.SerderKERI(raw=bytes(ims))
+            atc = ims[serder.size:]
+            try:
+                postman.send(serder=serder, attachment=atc)
+            except kering.ValidationError as ex:
+                logger.info(f"unable to send to recipient={msg['rec']}: {ex}")
+            else:
+                doer = doing.DoDoer(doers=postman.deliver())
+                self.extend([doer])
+
+        return super(ReplySender, self).recur(tyme, deeds)
+
+
+class ReplyCollectionEnd:
+    @staticmethod
+    def on_post(req, rep):
+        """
+        Parameters:
+            req (Request): falcon.Request HTTP request
+            rep (Response): falcon.Response HTTP response
+
+        ---
+        summary: Submit a signed reply message to the given recipient
+        description:  Submits a signed reply message to the given recipient if it exists.
+                      It does not validate the reply message validity - fire and forget.
+        tags:
+          - Reply
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                    - rec
+                    - rpy
+                properties:
+                  rec:
+                    type: string
+                    description: qb64 identifier prefix of recipient to send reply to
+                  rpy:
+                    type: string
+                    description: utf-8 encoded qb64 serder and attachment of reply mesage
+        responses:
+           202:
+              description: Reply message has been accepted and queued to be sent
+           404:
+              description: Identifier not found in Key event database
+        """
+        agent = req.context.agent
+        body = req.get_media()
+        rec = httping.getRequiredParam(body, "rec")
+        rpy = httping.getRequiredParam(body, "rpy")
+
+        if rec not in agent.hby.kevers:
+            raise falcon.HTTPBadRequest(description=f"attempt to send to unknown AID={rec}")
+
+        data = dict(rec=rec, rpy=rpy)
+        agent.replies.append(data)
+
+        rep.status = falcon.HTTP_202
+        rep.content_type = "application/json"
 
 
 class Granter(doing.DoDoer):
@@ -1003,6 +1085,9 @@ def loadEnds(app):
 
     queryEnd = QueryCollectionEnd()
     app.add_route("/queries", queryEnd)
+
+    replyCollectionEnd = ReplyCollectionEnd()
+    app.add_route("/replies", replyCollectionEnd)
 
     configEnd = ConfigResourceEnd()
     app.add_route("/config", configEnd)
