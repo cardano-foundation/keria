@@ -118,6 +118,9 @@ class KERIAServerConfig:
     # Experimental username for boot endpoint. Enables HTTP Basic Authentication for the boot endpoint. Only meant to be used for testing purposes.
     bootUsername: str = None
 
+    # Register /introduce reply route to allow for automatic OOBI introductions
+    allowIntroductions: bool = False
+
 def runAgency(config: KERIAServerConfig):
     """Runs a KERIA Agency with the given Doers by calling Doist.do(). Useful for testing."""
     help.ogler.level = logging.getLevelName(config.logLevel)
@@ -164,7 +167,8 @@ def setupDoers(config: KERIAServerConfig):
         releaseTimeout=config.releaseTimeout,
         curls=config.curls,
         iurls=config.iurls,
-        durls=config.durls
+        durls=config.durls,
+        allowIntroductions=config.allowIntroductions
     )
     allowed_cors_headers = [
         'cesr-attachment',
@@ -274,7 +278,9 @@ class Agency(doing.DoDoer):
 
     """
 
-    def __init__(self, name, bran, base="", releaseTimeout=None, configFile=None, configDir=None, adb=None, temp=False, curls=None, iurls=None, durls=None):
+    def __init__(self, name, bran, base="", releaseTimeout=None, configFile=None,
+                 configDir=None, adb=None, temp=False, curls=None, iurls=None, durls=None,
+                 allowIntroductions=False):
         self.name = name
         self.base = base
         self.bran = bran
@@ -285,6 +291,7 @@ class Agency(doing.DoDoer):
         self.curls = curls
         self.iurls = iurls
         self.durls = durls
+        self.allowIntroductions = allowIntroductions
 
         if self.configFile is not None:
             self.cf = configing.Configer(name=self.configFile,
@@ -453,7 +460,7 @@ class Agent(doing.DoDoer):
 
         self.cues = decking.Deck()
         self.rvy = routing.Revery(db=hby.db, cues=self.cues)
-        oobiery = oobiing.Oobiery(hby=hby, rvy=self.rvy)
+        oobiery = oobiing.Oobiery(hby=hby, rvy=self.rvy if agency.allowIntroductions else None)
 
         self.mgr = RemoteManager(hby=hby)
 

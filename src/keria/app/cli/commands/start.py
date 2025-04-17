@@ -99,7 +99,8 @@ def launch(args):
         iurls=getListVariable("KERIA_IURLS"),
         durls=getListVariable("KERIA_DURLS"),
         bootPassword=args.bootPassword,
-        bootUsername=args.bootUsername
+        bootUsername=args.bootUsername,
+        allowIntroductions=os.getenv("ALLOW_INTRODUCTIONS", "false").lower() in ("true", "1")
     ))
     logger.info("Agent %s gracefully stopped", args.name)
 
