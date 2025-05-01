@@ -121,6 +121,9 @@ class KERIAServerConfig:
     # Register /introduce reply route to allow for automatic OOBI introductions
     allowIntroductions: bool = False
 
+    # Enable remote signing protocol
+    remoteSigning: bool = False
+
 def runAgency(config: KERIAServerConfig):
     """Runs a KERIA Agency with the given Doers by calling Doist.do(). Useful for testing."""
     help.ogler.level = logging.getLevelName(config.logLevel)
@@ -168,7 +171,8 @@ def setupDoers(config: KERIAServerConfig):
         curls=config.curls,
         iurls=config.iurls,
         durls=config.durls,
-        allowIntroductions=config.allowIntroductions
+        allowIntroductions=config.allowIntroductions,
+        remoteSigning=config.remoteSigning
     )
     allowed_cors_headers = [
         'cesr-attachment',
@@ -280,7 +284,7 @@ class Agency(doing.DoDoer):
 
     def __init__(self, name, bran, base="", releaseTimeout=None, configFile=None,
                  configDir=None, adb=None, temp=False, curls=None, iurls=None, durls=None,
-                 allowIntroductions=False):
+                 allowIntroductions=False, remoteSigning=False):
         self.name = name
         self.base = base
         self.bran = bran
@@ -292,6 +296,7 @@ class Agency(doing.DoDoer):
         self.iurls = iurls
         self.durls = durls
         self.allowIntroductions = allowIntroductions
+        self.remoteSigning = remoteSigning
 
         if self.configFile is not None:
             self.cf = configing.Configer(name=self.configFile,
@@ -506,7 +511,8 @@ class Agent(doing.DoDoer):
         self.exc = exchanging.Exchanger(hby=hby, handlers=handlers)
         grouping.loadHandlers(exc=self.exc, mux=self.mux)
         protocoling.loadHandlers(hby=self.hby, exc=self.exc, notifier=self.notifier)
-        remotesigning.loadHandlers(hby=self.hby, exc=self.exc, notifier=self.notifier)
+        if self.agency.remoteSigning:
+            remotesigning.loadHandlers(hby=self.hby, exc=self.exc, notifier=self.notifier)
         self.submitter = Submitter(hby=hby, submits=self.submits, witRec=self.witSubmitDoer)
         self.monitor = longrunning.Monitor(hby=hby, swain=self.swain, counselor=self.counselor, temp=hby.temp,
                                            registrar=self.registrar, credentialer=self.credentialer, submitter=self.submitter, exchanger=self.exc)
