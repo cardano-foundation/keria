@@ -567,7 +567,7 @@ class Helpers:
             ims = eventing.messagize(serder, sigers=sigers)
             parsing.Parser(kvy=hby.kvy).parseOne(ims=ims)
 
-            agency = agenting.Agency(name="agency", bran=None, temp=True)
+            agency = agenting.Agency(name="agency", bran=None, temp=True, allowIntroductions=True)
             agentHab = hby.makeHab(serder.pre, ns="agent", transferable=True, delpre=serder.pre)
 
             rgy = credentialing.Regery(hby=hby, name=agentHab.name, base=hby.base, temp=True)
