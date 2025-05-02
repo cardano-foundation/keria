@@ -43,7 +43,7 @@ from keri.vdr.credentialing import Regery, sendArtifacts
 from keri.vdr.eventing import Tevery
 from keri.app import challenging
 
-from . import aiding, notifying, indirecting, credentialing, ipexing, delegating, remotesigning
+from . import aiding, notifying, indirecting, credentialing, ipexing, delegating, remotesigning, humanmessaging
 from . import grouping as keriagrouping
 from .serving import GracefulShutdownDoer
 from ..peer import exchanging as keriaexchanging
@@ -513,6 +513,7 @@ class Agent(doing.DoDoer):
         protocoling.loadHandlers(hby=self.hby, exc=self.exc, notifier=self.notifier)
         if self.agency.remoteSigning:
             remotesigning.loadHandlers(hby=self.hby, exc=self.exc, notifier=self.notifier)
+        humanmessaging.loadHandlers(exc=self.exc, notifier=self.notifier)
         self.submitter = Submitter(hby=hby, submits=self.submits, witRec=self.witSubmitDoer)
         self.monitor = longrunning.Monitor(hby=hby, swain=self.swain, counselor=self.counselor, temp=hby.temp,
                                            registrar=self.registrar, credentialer=self.credentialer, submitter=self.submitter, exchanger=self.exc)

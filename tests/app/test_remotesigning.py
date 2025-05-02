@@ -12,7 +12,7 @@ from keri.app import habbing, notifying
 from keria.app import remotesigning
 
 
-def test_remotesigning(mockCoringRandomNonce, mockHelpingNowIso8601, mockHelpingNowUTC):
+def test_remotesigning(mockHelpingNowIso8601):
     """ Test Remote Signing exchange protocol """
 
     salt = b'0123456789abcdef'
