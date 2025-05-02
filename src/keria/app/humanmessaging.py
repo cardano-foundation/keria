@@ -34,9 +34,12 @@ class HumanMessagingHandler:
             attachments (list): list of tuples of pather, CESR SAD path attachments to the exn event
 
         """
+        attrs = serder.ked["a"]
+
         data = dict(
             r=f"/exn{serder.ked['r']}",
             d=serder.said,
+            m=attrs["m"]
         )
 
         self.notifier.add(attrs=data)
