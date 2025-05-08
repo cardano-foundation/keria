@@ -100,7 +100,7 @@ def launch(args):
         durls=getListVariable("KERIA_DURLS"),
         bootPassword=args.bootPassword,
         bootUsername=args.bootUsername,
-        allowIntroductions=os.getenv("ALLOW_INTRODUCTIONS", "false").lower() in ("true", "1"),
+        allowIntroductions=os.getenv("ALLOW_INTRODUCTIONS", "true").lower() in ("true", "1"),
         remoteSigning=os.getenv("REMOTE_SIGNING", "false").lower() in ("true", "1")
     ))
     logger.info("Agent %s gracefully stopped", args.name)

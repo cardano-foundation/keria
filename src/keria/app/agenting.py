@@ -119,7 +119,7 @@ class KERIAServerConfig:
     bootUsername: str = None
 
     # Register /introduce reply route to allow for automatic OOBI introductions
-    allowIntroductions: bool = True
+    allowIntroductions: bool = False
 
     # Enable remote signing protocol
     remoteSigning: bool = False
