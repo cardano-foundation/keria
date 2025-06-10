@@ -148,7 +148,7 @@ class IpexAdmitCollectionEnd:
         serder = serdering.SerderKERI(sad=admitked)
         ims = bytearray(serder.raw) + pathed['exn']
         agent.hby.psr.parseOne(ims=ims)
-        agent.exchanges.append(dict(said=serder.said, pre=hab.pre, rec=[admitked['a']['i']], topic="credential"))
+        agent.exchanges.append(dict(said=serder.said, pre=hab.pre, rec=[admitked['rp']], topic="credential"))
         agent.admits.append(dict(said=admitked['d'], pre=hab.pre))
 
         return agent.monitor.submit(serder.said, longrunning.OpTypes.exchange, metadata=dict(said=serder.said))
@@ -266,7 +266,7 @@ class IpexGrantCollectionEnd:
 
         agent.exchanges.append(dict(said=serder.said, pre=hab.pre, rec=rec, topic='credential'))
 
-        grantRec = grant['a']['i']
+        grantRec = grant['rp']
         serder = serdering.SerderKERI(sad=grant)
         ims = bytearray(serder.raw) + pathed['exn']
         agent.hby.psr.parseOne(ims=ims)
@@ -381,7 +381,7 @@ class IpexApplyCollectionEnd:
 
         agent.exchanges.append(dict(said=serder.said, pre=hab.pre, rec=rec, topic='credential'))
 
-        applyRec = applyked['a']['i']
+        applyRec = applyked['rp']
         serder = serdering.SerderKERI(sad=applyked)
         ims = bytearray(serder.raw) + pathed['exn']
         agent.hby.psr.parseOne(ims=ims)
@@ -499,7 +499,7 @@ class IpexOfferCollectionEnd:
 
         agent.exchanges.append(dict(said=serder.said, pre=hab.pre, rec=rec, topic='credential'))
 
-        offerRec = offerked['a']['i']
+        offerRec = offerked['rp']
         serder = serdering.SerderKERI(sad=offerked)
         ims = bytearray(serder.raw) + pathed['exn']
         agent.hby.psr.parseOne(ims=ims)
@@ -616,7 +616,7 @@ class IpexAgreeCollectionEnd:
 
         agent.exchanges.append(dict(said=serder.said, pre=hab.pre, rec=rec, topic='credential'))
 
-        agreeRec = agreeKed['a']['i']
+        agreeRec = agreeKed['rp']
         serder = serdering.SerderKERI(sad=agreeKed)
         ims = bytearray(serder.raw) + pathed['exn']
         agent.hby.psr.parseOne(ims=ims)
