@@ -6,8 +6,7 @@ keria.app.grouping module
 """
 
 import json
-from dataclasses import dataclass, field
-from marshmallow import fields
+from dataclasses import dataclass
 
 import falcon
 from typing import Optional, Union
@@ -310,6 +309,7 @@ class MultisigRevokeEmbeds:
 @dataclass
 class MultisigRpyEmbeds:
     rpy: Union["aiding.RPY_V_1", "aiding.RPY_V_2"]  # type: ignore
+    anc: credentialing.AnchoringEvent  # type: ignore
 
 
 @dataclass
@@ -379,15 +379,19 @@ ExnEmbeds = Union[
 class ExnMultisig:
     exn: Union["agenting.EXN_V_1", "agenting.EXN_V_2"]  # type: ignore
     paths: dict
-    groupName: Optional[str] = field(
-        default=None, metadata={"marshmallow_field": fields.String(allow_none=False)}
-    )
-    memberName: Optional[str] = field(
-        default=None, metadata={"marshmallow_field": fields.String(allow_none=False)}
-    )
-    sender: Optional[str] = field(
-        default=None, metadata={"marshmallow_field": fields.String(allow_none=False)}
-    )
+    e: Union[
+        MultisigInceptEmbeds,
+        MultisigRotateEmbeds,
+        MultisigInteractEmbeds,
+        MultisigRegistryInceptEmbeds,
+        MultisigIssueEmbeds,
+        MultisigRevokeEmbeds,
+        MultisigRpyEmbeds,
+        MultisigExnEmbeds,
+    ]
+    groupName: Optional[str] = None
+    memberName: Optional[str] = None
+    sender: Optional[str] = None
 
 
 class MultisigRequestResourceEnd:

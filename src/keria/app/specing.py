@@ -405,7 +405,7 @@ class AgentSpecResource:
             "MultisigRotateEmbeds",
             schema=marshmallow_dataclass.class_schema(grouping.MultisigRotateEmbeds),
         )
-        self.spec.components.schemas["MultisigRotateEmbeds"]["properties"]["rot"] = {
+        self.spec.components.schemas["MultisigInceptEmbeds"]["properties"]["rot"] = {
             "$ref": "#/components/schemas/Rot"
         }
 
@@ -454,7 +454,7 @@ class AgentSpecResource:
         self.spec.components.schemas["MultisigRevokeEmbeds"]["properties"]["rev"] = {
             "$ref": "#/components/schemas/REV_V_1"
         }
-        self.spec.components.schemas["MultisigRevokeEmbeds"]["properties"]["anc"] = (
+        self.spec.components.schemas["MultisigIssueEmbeds"]["properties"]["anc"] = (
             ancEvent
         )
 
@@ -495,25 +495,7 @@ class AgentSpecResource:
         )
         exnMSchema = self.spec.components.schemas["ExnMultisig"]
         exnMSchema["properties"]["exn"] = {"$ref": "#/components/schemas/Exn"}
-
-        # Patch KeyStateRecord
-        keyStateRecordSchema = self.spec.components.schemas["KeyStateRecord"]
-        keyStateRecordSchema["properties"]["kt"] = {
-            "oneOf": [
-                {"type": "string"},
-                {"type": "array", "items": {"type": "string"}},
-            ]
-        }
-        keyStateRecordSchema["properties"]["nt"] = {
-            "oneOf": [
-                {"type": "string"},
-                {"type": "array", "items": {"type": "string"}},
-            ]
-        }
-        if "kt" not in keyStateRecordSchema["required"]:
-            keyStateRecordSchema["required"].append("kt")
-        if "nt" not in keyStateRecordSchema["required"]:
-            keyStateRecordSchema["required"].append("nt")
+        exnMSchema["properties"]["e"] = {"$ref": "#/components/schemas/ExnEmbeds"}
 
         self.addRoutes(app)
 
