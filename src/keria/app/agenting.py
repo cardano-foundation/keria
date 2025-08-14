@@ -10,7 +10,7 @@ from base64 import b64decode
 import json
 import datetime
 from dataclasses import asdict, dataclass, field
-from typing import List
+from typing import List, Union
 from urllib.parse import urlparse, urljoin
 from types import MappingProxyType
 
@@ -1090,6 +1090,17 @@ class BootEnd:
             req (Request): falcon.Request HTTP request object
             rep (Response): falcon.Response HTTP response object
 
+        responses:
+            202:
+                description: Agent inception successful, returns agent state
+                content:
+                    application/json:
+                        schema: ref: '#/components/schemas/KeyStateRecord'
+            400:
+                description: Bad request, missing required fields or invalid inception event
+            409:
+                description: Conflict, agent for controller already exists
+
         """
 
         self.authenticate(req)
@@ -1197,6 +1208,14 @@ class KeyStateCollectionEnd:
         responses:
            200:
               description: Key event log and key state of identifier
+              content:
+                application/json:
+                    schema: 
+                        type: array
+                        items:
+                            $ref: '#/components/schemas/KeyStateRecord'
+           400:
+              description: Bad request, missing required fields
            404:
               description: Identifier not found in Key event database
 
@@ -1220,6 +1239,16 @@ class KeyStateCollectionEnd:
         rep.status = falcon.HTTP_200
         rep.content_type = "application/json"
         rep.data = json.dumps(states).encode("utf-8")
+
+
+@dataclass
+class KeyEventRecord:
+    """ Key Event Record for KEL """
+    ked: Union[
+        aiding.IcpV1, aiding.RotV1, aiding.IxnV1, aiding.DipV1, aiding.DrtV1, aiding.RctV1, aiding.QryV1, aiding.RpyV1, aiding.ProV1, aiding.BarV1, aiding.ExnV1, aiding.VcpV1, aiding.VrtV1, aiding.IssV1, aiding.RevV1, aiding.BisV1, aiding.BrvV1, # type: ignore
+        aiding.IcpV2, aiding.RotV2, aiding.IxnV2, aiding.DipV2, aiding.DrtV2, aiding.RctV2, aiding.QryV2, aiding.RpyV2, aiding.ProV2, aiding.BarV2, aiding.XipV2, aiding.ExnV2 # type: ignore
+    ]
+    atc: str
 
 
 class KeyEventCollectionEnd:
@@ -1248,6 +1277,12 @@ class KeyEventCollectionEnd:
         responses:
            200:
               description: Key event log and key state of identifier
+              content:
+                application/json:
+                    schema: 
+                        type: array
+                        items:
+                            $ref: '#/components/schemas/KeyEventRecord'
            404:
               description: Identifier not found in Key event database
 
@@ -1314,6 +1349,10 @@ class OOBICollectionEnd:
         responses:
            202:
               description: OOBI resolution to key state successful
+              content:
+                application/json:
+                  schema: 
+                    $ref: '#/components/schemas/Operation'
 
         """
         agent = req.context.agent
@@ -1378,8 +1417,7 @@ class OobiResourceEnd:
               content:
                   application/json:
                     schema:
-                        description: Key state information for current identifiers
-                        type: object
+                        $ref: '#/components/schemas/OOBI'
         """
         agent = req.context.agent
         hab = agent.hby.habByName(alias)
@@ -1472,6 +1510,10 @@ class QueryCollectionEnd:
         responses:
            200:
               description: Key event log and key state of identifier
+              content:
+                application/json:
+                    schema: 
+                        $ref: '#/components/schemas/Operation'
            404:
               description: Identifier not found in Key event database
 
@@ -1545,6 +1587,11 @@ class Submitter(doing.DoDoer):
         return super(Submitter, self).recur(tyme, deeds)
 
 
+@dataclass
+class AgentConfig:
+    """ Agent configuration data class """
+    iurls: list[str] = field(default_factory=list)
+
 class ConfigResourceEnd:
 
     @staticmethod
@@ -1563,6 +1610,10 @@ class ConfigResourceEnd:
         responses:
            200:
               description: Subset of configuration dict as JSON
+              content:
+                application/json:
+                  schema:
+                    $ref: '#/components/schemas/AgentConfig'
 
         """
         agent = req.context.agent

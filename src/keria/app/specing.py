@@ -5,7 +5,7 @@ from apispec import yaml_utils
 from apispec.core import VALID_METHODS, APISpec
 from apispec.ext.marshmallow import MarshmallowPlugin
 
-from keria.app import aiding
+from keria.app import aiding, agenting
 from ..core import longrunning
 from . import credentialing
 from keri.core import coring
@@ -87,16 +87,37 @@ class AgentSpecResource:
         }
 
         # Register the AgentSpecResource
+        # Keri V1.0
         self.spec.components.schema("IcpV1", schema=aiding.IcpV1Schema)
-        self.spec.components.schema("IcpV2", schema=aiding.IcpV2Schema)
         self.spec.components.schema("RotV1", schema=aiding.RotV1Schema)
-        self.spec.components.schema("RotV2", schema=aiding.RotV2Schema)
         self.spec.components.schema("DipV1", schema=aiding.DipV1Schema)
-        self.spec.components.schema("DipV2", schema=aiding.DipV2Schema)
         self.spec.components.schema("DrtV1", schema=aiding.DrtV1Schema)
-        self.spec.components.schema("DrtV2", schema=aiding.DrtV2Schema)
         self.spec.components.schema("VcpV1", schema=aiding.VcpV1Schema)
         self.spec.components.schema("VrtV1", schema=aiding.VrtV1Schema)
+        self.spec.components.schema("IxnV1", schema=aiding.IxnV1Schema)
+        self.spec.components.schema("RctV1", schema=aiding.RctV1Schema)
+        self.spec.components.schema("QryV1", schema=aiding.QryV1Schema)
+        self.spec.components.schema("RpyV1", schema=aiding.RpyV1Schema)
+        self.spec.components.schema("ProV1", schema=aiding.ProV1Schema)
+        self.spec.components.schema("BarV1", schema=aiding.BarV1Schema)
+        self.spec.components.schema("ExnV1", schema=aiding.ExnV1Schema)
+        self.spec.components.schema("IssV1", schema=aiding.IssV1Schema)
+        self.spec.components.schema("RevV1", schema=aiding.RevV1Schema)
+        self.spec.components.schema("BisV1", schema=aiding.BisV1Schema)
+        self.spec.components.schema("BrvV1", schema=aiding.BrvV1Schema)
+        # Keri V2.0
+        self.spec.components.schema("IcpV2", schema=aiding.IcpV2Schema)
+        self.spec.components.schema("RotV2", schema=aiding.RotV2Schema)
+        self.spec.components.schema("DipV2", schema=aiding.DipV2Schema)
+        self.spec.components.schema("DrtV2", schema=aiding.DrtV2Schema)
+        self.spec.components.schema("IxnV2", schema=aiding.IxnV2Schema)
+        self.spec.components.schema("RctV2", schema=aiding.RctV2Schema)
+        self.spec.components.schema("QryV2", schema=aiding.QryV2Schema)
+        self.spec.components.schema("RpyV2", schema=aiding.RpyV2Schema)
+        self.spec.components.schema("ProV2", schema=aiding.ProV2Schema)
+        self.spec.components.schema("BarV2", schema=aiding.BarV2Schema)
+        self.spec.components.schema("XipV2", schema=aiding.XipV2Schema)
+        self.spec.components.schema("ExnV2", schema=aiding.ExnV2Schema)
 
         self.spec.components.schema("AgentResourceResult", schema=marshmallow_dataclass.class_schema(aiding.AgentResourceResult)())
 
@@ -163,8 +184,6 @@ class AgentSpecResource:
         self.spec.components.schema("EndRole", schema=marshmallow_dataclass.class_schema(aiding.EndRole)())
 
         # RpyEndRole
-        self.spec.components.schema("RpyV1", schema=aiding.RpyV1Schema)
-        self.spec.components.schema("RpyV2", schema=aiding.RpyV2Schema)
         self.spec.components.schemas["Rpy"] = {
             "oneOf": [
                 {"$ref": "#/components/schemas/RpyV1"},
@@ -183,6 +202,48 @@ class AgentSpecResource:
 
         # Register the GroupMember schema
         self.spec.components.schema("GroupMember", schema=marshmallow_dataclass.class_schema(aiding.GroupMember)())
+
+        # Register the KeyEventRecord schema
+        self.spec.components.schema("KeyEventRecord", schema=marshmallow_dataclass.class_schema(agenting.KeyEventRecord)())
+        keyEventRecordSchema = self.spec.components.schemas["KeyEventRecord"]
+        keyEventRecordSchema["properties"]["ked"] = {
+            "oneOf": [
+                # Keri V1.0
+                {"$ref": "#/components/schemas/IcpV1"},
+                {"$ref": "#/components/schemas/RotV1"},
+                {"$ref": "#/components/schemas/IxnV1"},
+                {"$ref": "#/components/schemas/DipV1"},
+                {"$ref": "#/components/schemas/DrtV1"},
+                {"$ref": "#/components/schemas/RctV1"},
+                {"$ref": "#/components/schemas/QryV1"},
+                {"$ref": "#/components/schemas/RpyV1"},
+                {"$ref": "#/components/schemas/ProV1"},
+                {"$ref": "#/components/schemas/BarV1"},
+                {"$ref": "#/components/schemas/ExnV1"},
+                {"$ref": "#/components/schemas/VcpV1"},
+                {"$ref": "#/components/schemas/VrtV1"},
+                {"$ref": "#/components/schemas/IssV1"},
+                {"$ref": "#/components/schemas/RevV1"},
+                {"$ref": "#/components/schemas/BisV1"},
+                {"$ref": "#/components/schemas/BrvV1"},
+                # Keri V2.0
+                {"$ref": "#/components/schemas/IcpV2"},
+                {"$ref": "#/components/schemas/RotV2"},
+                {"$ref": "#/components/schemas/IxnV2"},
+                {"$ref": "#/components/schemas/DipV2"},
+                {"$ref": "#/components/schemas/DrtV2"},
+                {"$ref": "#/components/schemas/RctV2"},
+                {"$ref": "#/components/schemas/QryV2"},
+                {"$ref": "#/components/schemas/RpyV2"},
+                {"$ref": "#/components/schemas/ProV2"},
+                {"$ref": "#/components/schemas/BarV2"},
+                {"$ref": "#/components/schemas/XipV2"},
+                {"$ref": "#/components/schemas/ExnV2"}
+            ]
+        }
+
+        # Register the AgentConfig schema
+        self.spec.components.schema("AgentConfig", schema=marshmallow_dataclass.class_schema(agenting.AgentConfig)())
 
         self.addRoutes(app)
 
