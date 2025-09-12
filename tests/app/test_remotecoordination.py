@@ -1,14 +1,8 @@
 # -*- encoding: utf-8 -*-
 """
-tests.app.coordination_handlers module
+test_remotecoordination.py module
 
-Comprehensive tests for all 4 remote coordination protocol handlers:
-- /coordination/credentials/info/req
-- /coordination/credentials/info/resp
-- /coordination/credentials/issue/prop
-- /coordination/credentials/issue/resp
-
-Tests include good/bad data validation and raw message assertions.
+Test Remote Coordination exchange protocol
 """
 
 from keri import core

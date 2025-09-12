@@ -64,9 +64,6 @@ class RemoteCoordinationHandler:
                 if not dig:
                     return False
 
-                if any(key != 'd' for key in attrs.keys()):
-                    return False
-
                 pserder, _ = exchanging.cloneMessage(self.hby, said=dig)
                 if pserder is None:
                     return False
