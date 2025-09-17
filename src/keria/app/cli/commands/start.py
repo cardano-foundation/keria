@@ -101,7 +101,8 @@ def launch(args):
         bootPassword=args.bootPassword,
         bootUsername=args.bootUsername,
         allowIntroductions=os.getenv("ALLOW_INTRODUCTIONS", "true").lower() in ("true", "1"),
-        remoteSigning=os.getenv("REMOTE_SIGNING", "false").lower() in ("true", "1")
+        remoteSigning=os.getenv("REMOTE_SIGNING", "false").lower() in ("true", "1"),
+        remoteCoordination=os.getenv("REMOTE_COORDINATION", "true").lower() in ("true", "1")
     ))
     logger.info("Agent %s gracefully stopped", args.name)
 

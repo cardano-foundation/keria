@@ -43,7 +43,7 @@ from keri.vdr.credentialing import Regery, sendArtifacts
 from keri.vdr.eventing import Tevery
 from keri.app import challenging
 
-from . import aiding, notifying, indirecting, credentialing, ipexing, delegating, remotesigning, humanmessaging
+from . import aiding, notifying, indirecting, credentialing, ipexing, delegating, remotesigning, remotecoordination, humanmessaging
 from . import grouping as keriagrouping
 from .serving import GracefulShutdownDoer
 from ..peer import exchanging as keriaexchanging
@@ -123,6 +123,8 @@ class KERIAServerConfig:
 
     # Enable remote signing protocol
     remoteSigning: bool = False
+    # Enable remote coordination protocol
+    remoteCoordination: bool = False
 
 def runAgency(config: KERIAServerConfig):
     """Runs a KERIA Agency with the given Doers by calling Doist.do(). Useful for testing."""
@@ -172,7 +174,8 @@ def setupDoers(config: KERIAServerConfig):
         iurls=config.iurls,
         durls=config.durls,
         allowIntroductions=config.allowIntroductions,
-        remoteSigning=config.remoteSigning
+        remoteSigning=config.remoteSigning,
+        remoteCoordination=config.remoteCoordination
     )
     allowed_cors_headers = [
         'cesr-attachment',
@@ -284,7 +287,7 @@ class Agency(doing.DoDoer):
 
     def __init__(self, name, bran, base="", releaseTimeout=None, configFile=None,
                  configDir=None, adb=None, temp=False, curls=None, iurls=None, durls=None,
-                 allowIntroductions=False, remoteSigning=False):
+                 allowIntroductions=False, remoteSigning=False, remoteCoordination=False):
         self.name = name
         self.base = base
         self.bran = bran
@@ -297,6 +300,7 @@ class Agency(doing.DoDoer):
         self.durls = durls
         self.allowIntroductions = allowIntroductions
         self.remoteSigning = remoteSigning
+        self.remoteCoordination = remoteCoordination
 
         if self.configFile is not None:
             self.cf = configing.Configer(name=self.configFile,
@@ -513,6 +517,8 @@ class Agent(doing.DoDoer):
         protocoling.loadHandlers(hby=self.hby, exc=self.exc, notifier=self.notifier)
         if self.agency.remoteSigning:
             remotesigning.loadHandlers(hby=self.hby, exc=self.exc, notifier=self.notifier)
+        if self.agency.remoteCoordination:
+            remotecoordination.loadHandlers(hby=self.hby, exc=self.exc, notifier=self.notifier)
         humanmessaging.loadHandlers(exc=self.exc, notifier=self.notifier)
         self.submitter = Submitter(hby=hby, submits=self.submits, witRec=self.witSubmitDoer)
         self.monitor = longrunning.Monitor(hby=hby, swain=self.swain, counselor=self.counselor, temp=hby.temp,
