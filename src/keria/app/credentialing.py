@@ -438,14 +438,14 @@ class RegistryVerificationCollectionEnd:
                   type: object
                   required:
                     - vcp
-                    - atc
                   properties:
                     vcp:
                       type: object
                       description: KED of VCP event in TEL
                     atc:
                       type: string
-                      description: qb64 encoded attachment data
+                      required: false
+                      description: qb64 encoded attachment data (optional)
         responses:
            202:
               description: Registry accepted for parsing
@@ -462,17 +462,17 @@ class RegistryVerificationCollectionEnd:
 
         try:
             serder = serdering.SerderKERI(sad=httping.getRequiredParam(body, "vcp"))
-            atc = httping.getRequiredParam(body, "atc")
+            atc = body.get("atc")
             
-            # Convert atc from qb64 string to bytes if needed
-            if isinstance(atc, str):
+            if atc is not None and isinstance(atc, str):
                 atc = atc.encode('utf-8')
             
             msg = bytearray(serder.raw) 
-            msg.extend(atc)         
-        except (kering.ValidationError, json.decoder.JSONDecodeError) as e:
+            if atc is not None:
+                msg.extend(atc)
+        except (kering.ValidationError, kering.SerializeError, json.decoder.JSONDecodeError, ValueError, TypeError, KeyError) as e:
             rep.status = falcon.HTTP_400
-            rep.text = e.args[0]
+            rep.text = str(e)
             return
 
         # Parse the message
@@ -900,7 +900,7 @@ class CredentialResourceEnd:
            204:
               description: Credential deleted successfully
            400:
-             description: The requested credential was not found
+             description: The requested credential was not found.
         """
         reger = req.context.agent.rgy.reger
 

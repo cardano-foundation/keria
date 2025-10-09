@@ -686,3 +686,94 @@ def test_revoke_credential(helpers, seeder):
         assert res.status_code == 200
         assert res.json["s"] == "1"
         assert res.json["et"] == "rev"
+
+
+def test_registry_verification(helpers, seeder):
+    with helpers.openKeria() as (agency, agent, app, client):
+        registryVerificationEnd = credentialing.RegistryVerificationCollectionEnd()
+        app.add_route("/registries/verify", registryVerificationEnd)
+        opEnd = longrunning.OperationResourceEnd()
+        app.add_route("/operations/{name}", opEnd)
+        
+        seeder.seedSchema(agent.hby.db)
+        
+        # Create identifier first
+        end = aiding.IdentifierCollectionEnd()
+        app.add_route("/identifiers", end)
+        salt = b'0123456789abcdef'
+        op = helpers.createAid(client, "test", salt)
+        aid = op["response"]
+        pre = aid['i']
+        assert pre == "EHgwVwQT15OJvilVvW57HE4w0-GPs_Stj2OFoAHZSysY"
+
+        # Create VCP (Registry Inception) event using the created identifier
+        nonce = "AGu8jwfkyvVXQ2nqEb5yVigEtR31KSytcpe2U2f7NArr"
+        regser = eventing.incept(pre,
+                                 baks=[],
+                                 toad="0",
+                                 nonce=nonce,
+                                 cnfg=[TraitCodex.NoBackers],
+                                 code=coring.MtrDex.Blake3_256)
+        
+        # Create attachment data (signatures, etc.)
+        atc = b'-AABAADKbzIrTGVZA7PEKlOe7NQ5yJk3H5StN6qYRSfW6QYg_YFbm8iLHNRGwqL7tFnxRKS6n-qLO5P3HhH9jM4n6AE'
+        
+        # Test valid registry verification with attachment
+        body = {
+            "vcp": regser.ked,
+            "atc": atc.decode('utf-8')
+        }
+        
+        result = client.simulate_post(path="/registries/verify", 
+                                     body=json.dumps(body).encode("utf-8"))
+        assert result.status_code == 202
+        op = result.json
+        assert op["done"] is False
+        assert "name" in op
+        assert "metadata" in op
+        assert op["metadata"]["pre"] == regser.ked["ii"]
+        assert op["metadata"]["anchor"]["i"] == regser.ked["i"]
+        assert op["metadata"]["anchor"]["s"] == "0"
+        assert op["metadata"]["anchor"]["d"] == regser.ked["d"]
+
+        # Test valid registry verification without attachment
+        bodyNoAtc = {
+            "vcp": regser.ked
+        }
+        
+        result = client.simulate_post(path="/registries/verify", 
+                                     body=json.dumps(bodyNoAtc).encode("utf-8"))
+        assert result.status_code == 202
+        op = result.json
+        assert op["done"] is False
+        assert "name" in op
+        assert "metadata" in op
+
+        # Test missing required field
+        bodyMissingVcp = {
+            "atc": atc.decode('utf-8')
+        }
+        
+        result = client.simulate_post(path="/registries/verify", 
+                                     body=json.dumps(bodyMissingVcp).encode("utf-8"))
+        assert result.status_code == 400
+
+        # Test malformed VCP event
+        bodyBadVcp = {
+            "vcp": {"invalid": "event"},
+            "atc": atc.decode('utf-8')
+        }
+        
+        result = client.simulate_post(path="/registries/verify", 
+                                     body=json.dumps(bodyBadVcp).encode("utf-8"))
+        assert result.status_code == 400
+
+        # Test invalid JSON
+        result = client.simulate_post(path="/registries/verify", 
+                                     body=b'invalid json')
+        assert result.status_code == 400
+
+        # Test empty body
+        result = client.simulate_post(path="/registries/verify", 
+                                     body=b'{}')
+        assert result.status_code == 400
