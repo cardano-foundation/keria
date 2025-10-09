@@ -513,6 +513,10 @@ class CredentialVerificationCollectionEnd:
                     iss:
                       type: object
                       description: KED of issuing event in VC TEL
+                    atc:
+                      type: string
+                      required: false
+                      description: qb64 encoded attachment data (optional)
         responses:
            202:
               description: Credential accepted for parsing
@@ -530,10 +534,10 @@ class CredentialVerificationCollectionEnd:
         try:
             creder = serdering.SerderACDC(sad=httping.getRequiredParam(body, "acdc"))
             iserder = serdering.SerderKERI(sad=httping.getRequiredParam(body, "iss"))
-            atc = httping.getRequiredParam(body, "atc")
+            atc = body.get("atc")
             
-            # Convert atc from qb64 string to bytes if needed
-            if isinstance(atc, str):
+            # Convert atc from qb64 string to bytes if provided
+            if atc is not None and isinstance(atc, str):
                 atc = atc.encode('utf-8')
 
         except (kering.ValidationError, json.decoder.JSONDecodeError) as e:
@@ -546,7 +550,10 @@ class CredentialVerificationCollectionEnd:
         saider = coring.Saider(qb64=iserder.said)
 
         msg = bytearray(iserder.raw)
-        msg.extend(atc)
+
+        if atc is not None:
+            msg.extend(atc)
+
         agent.parser.ims.extend(msg)
         agent.parser.ims.extend(signing.serialize(creder, prefixer, seqner, saider))
         op = agent.monitor.submit(creder.said, longrunning.OpTypes.verifyCredential,
