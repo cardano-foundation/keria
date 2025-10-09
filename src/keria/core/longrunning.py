@@ -21,11 +21,11 @@ from keria.app import delegating
 
 # long running operation types
 Typeage = namedtuple("Tierage", 'oobi witness delegation group query registry credential endrole challenge exchange submit '
-                                'done')
+                                'verifyCredential done')
 
 OpTypes = Typeage(oobi="oobi", witness='witness', delegation='delegation', group='group', query='query',
                   registry='registry', credential='credential', endrole='endrole', challenge='challenge',
-                  exchange='exchange', submit='submit', done='done')
+                  exchange='exchange', submit='submit', verifyCredential='verifyCredential', done='done')
 
 
 @dataclass_json
@@ -367,6 +367,18 @@ class Monitor:
 
             ced = op.metadata["ced"]
             if self.credentialer.complete(ced['d']):
+                operation.done = True
+                operation.response = dict(ced=ced)
+            else:
+                operation.done = False
+
+        elif op.type in (OpTypes.verifyCredential,):
+            if "ced" not in op.metadata:
+                raise kering.ValidationError(
+                    f"invalid long running {op.type} operation, metadata missing 'ced' field")
+
+            ced = op.metadata["ced"]
+            if self.credentialer.rgy.reger.saved.get(keys=ced['d']):
                 operation.done = True
                 operation.response = dict(ced=ced)
             else:

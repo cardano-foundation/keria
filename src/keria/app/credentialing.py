@@ -49,6 +49,9 @@ def loadEnds(app, identifierResource):
     credentialVerificationEnd = CredentialVerificationCollectionEnd()
     app.add_route("/credentials/verify", credentialVerificationEnd)
 
+    registryVerificationEnd = RegistryVerificationCollectionEnd()
+    app.add_route("/registries/verify", registryVerificationEnd)
+
 
 class RegistryCollectionEnd:
     """
@@ -413,6 +416,73 @@ class SchemaCollectionEnd:
         rep.data = json.dumps(data).encode("utf-8")
 
 
+class RegistryVerificationCollectionEnd:
+    @staticmethod
+    def on_post(req, rep):
+        """ Verify registry endpoint
+
+        Parameters:
+            req: falcon.Request HTTP request
+            rep: falcon.Response HTTP response
+
+        ---
+        summary: Verify a registry inception event
+        description: Verify a registry inception event
+        tags:
+           - Registries
+        requestBody:
+            required: true
+            content:
+              application/json:
+                schema:
+                  type: object
+                  required:
+                    - vcp
+                    - atc
+                  properties:
+                    vcp:
+                      type: object
+                      description: KED of VCP event in TEL
+                    atc:
+                      type: string
+                      description: qb64 encoded attachment data
+        responses:
+           202:
+              description: Registry accepted for parsing
+              content:
+                  application/json:
+                    schema:
+                        description: long running operation of registry processing
+                        type: object
+           400:
+              description: Malformed VCP event or attachment
+        """
+        agent = req.context.agent
+        body = req.get_media()
+
+        try:
+            serder = serdering.SerderKERI(sad=httping.getRequiredParam(body, "vcp"))
+            atc = httping.getRequiredParam(body, "atc")
+            
+            # Convert atc from qb64 string to bytes if needed
+            if isinstance(atc, str):
+                atc = atc.encode('utf-8')
+            
+            msg = bytearray(serder.raw) 
+            msg.extend(atc)         
+        except (kering.ValidationError, json.decoder.JSONDecodeError) as e:
+            rep.status = falcon.HTTP_400
+            rep.text = e.args[0]
+            return
+
+        # Parse the message
+        agent.parser.ims.extend(msg)
+        anchor = dict(i=serder.sad['i'], s="0", d=serder.sad['d'])
+        op = agent.monitor.submit(serder.sad['d'], longrunning.OpTypes.registry,
+                                  metadata=dict(pre=serder.sad['ii'], anchor=anchor))
+        rep.status = falcon.HTTP_202
+        rep.data = op.to_json().encode("utf-8")
+
 class CredentialVerificationCollectionEnd:
     @staticmethod
     def on_post(req, rep):
@@ -460,6 +530,12 @@ class CredentialVerificationCollectionEnd:
         try:
             creder = serdering.SerderACDC(sad=httping.getRequiredParam(body, "acdc"))
             iserder = serdering.SerderKERI(sad=httping.getRequiredParam(body, "iss"))
+            atc = httping.getRequiredParam(body, "atc")
+            
+            # Convert atc from qb64 string to bytes if needed
+            if isinstance(atc, str):
+                atc = atc.encode('utf-8')
+
         except (kering.ValidationError, json.decoder.JSONDecodeError) as e:
             rep.status = falcon.HTTP_400
             rep.text = e.args[0]
@@ -469,8 +545,11 @@ class CredentialVerificationCollectionEnd:
         seqner = coring.Seqner(sn=iserder.sn)
         saider = coring.Saider(qb64=iserder.said)
 
+        msg = bytearray(iserder.raw)
+        msg.extend(atc)
+        agent.parser.ims.extend(msg)
         agent.parser.ims.extend(signing.serialize(creder, prefixer, seqner, saider))
-        op = agent.monitor.submit(creder.said, longrunning.OpTypes.credential,
+        op = agent.monitor.submit(creder.said, longrunning.OpTypes.verifyCredential,
                                   metadata=dict(ced=creder.sad))
         rep.status = falcon.HTTP_202
         rep.data = op.to_json().encode("utf-8")
