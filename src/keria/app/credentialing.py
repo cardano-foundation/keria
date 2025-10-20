@@ -534,11 +534,15 @@ class CredentialVerificationCollectionEnd:
         try:
             creder = serdering.SerderACDC(sad=httping.getRequiredParam(body, "acdc"))
             iserder = serdering.SerderKERI(sad=httping.getRequiredParam(body, "iss"))
-            atc = body.get("atc")
+            issAtc = body.get("issAtc")
+            acdcAtc = body.get("acdcAtc")
             
             # Convert atc from qb64 string to bytes if provided
-            if atc is not None and isinstance(atc, str):
-                atc = atc.encode('utf-8')
+            if issAtc is not None and isinstance(issAtc, str):
+                issAtc = issAtc.encode('utf-8')
+                
+            if acdcAtc is not None and isinstance(acdcAtc, str):
+                acdcAtc = acdcAtc.encode('utf-8')
 
         except (kering.ValidationError, json.decoder.JSONDecodeError) as e:
             rep.status = falcon.HTTP_400
@@ -549,13 +553,17 @@ class CredentialVerificationCollectionEnd:
         seqner = coring.Seqner(sn=iserder.sn)
         saider = coring.Saider(qb64=iserder.said)
 
-        msg = bytearray(iserder.raw)
+        issMsg = bytearray(iserder.raw)
+        acdcMsg = signing.serialize(creder, prefixer, seqner, saider)
 
-        if atc is not None:
-            msg.extend(atc)
+        if issAtc is not None:
+            issMsg.extend(issAtc)
 
-        agent.parser.ims.extend(msg)
-        agent.parser.ims.extend(signing.serialize(creder, prefixer, seqner, saider))
+        if acdcAtc is not None:
+            acdcMsg.extend(acdcAtc)
+
+        agent.parser.ims.extend(issMsg)
+        agent.parser.ims.extend(acdcMsg)
         op = agent.monitor.submit(creder.said, longrunning.OpTypes.verifyCredential,
                                   metadata=dict(ced=creder.sad))
         rep.status = falcon.HTTP_202
