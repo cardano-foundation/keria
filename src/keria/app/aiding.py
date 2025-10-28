@@ -750,7 +750,11 @@ class IdentifierResourceEnd:
                 title=f"AID with name {newName} already incepted"
             )
 
-        hab = agent.hby.habs[name] if name in agent.hby.habs else agent.hby.habByName(name)
+        hab = (
+            agent.hby.habs[name]
+            if name in agent.hby.habs
+            else agent.hby.habByName(name)
+        )
 
         if hab is None:
             raise falcon.HTTPNotFound(title=f"No AID with name or prefix {name} found")
