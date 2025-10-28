@@ -6,6 +6,7 @@ keria.app.grouping module
 Testing the Mark II Agent Grouping endpoints
 
 """
+
 import json
 
 from keri.app.habbing import SignifyGroupHab
@@ -143,7 +144,7 @@ def test_multisig_request_ends(helpers):
         esaid = exn.ked["e"]["d"]
         agent.hby.db.meids.add(keys=(esaid,), val=coring.Saider(qb64=exn.said))
 
-        res = client.simulate_get(path=f"/multisig/request/BADSAID")
+        res = client.simulate_get(path="/multisig/request/BADSAID")
         assert res.status_code == 404
 
         res = client.simulate_get(path=f"/multisig/request/{said}")
@@ -290,7 +291,10 @@ def test_join(helpers, monkeypatch):
         assert res.json == {
             "done": False,
             "error": None,
-            "metadata": {"pre": "EDWg3-rB5FTpcckaYdBcexGmbLIO6AvAwjaJTBlXUn_I", "sn": 3},
+            "metadata": {
+                "pre": "EDWg3-rB5FTpcckaYdBcexGmbLIO6AvAwjaJTBlXUn_I",
+                "sn": 3,
+            },
             "name": "group.EPKCBT0rSgFKTDRjynYzOTsYWo7fDNElTxFbRZZW9f6R",
             "response": None,
         }

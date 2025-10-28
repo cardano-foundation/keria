@@ -1,13 +1,12 @@
 # This workflow will install Python dependencies, run tests and lint with a single version of Python
 # For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
 
-
 name: GitHub Actions for KERIA
 on:
   push:
     branches:
-      - 'main'
-      - 'development'
+      - "main"
+      - "development"
   pull_request:
   workflow_dispatch:
 
@@ -17,7 +16,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ macos-13, ubuntu-latest ]
+        os: [macos-13, ubuntu-latest]
 
     steps:
       - uses: actions/checkout@v4
@@ -28,17 +27,24 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install flake8 pytest hio requests
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          pip install -r requirements.txt keria[dev]
       - name: Lint changes
         run: |
-          # stop the build if there are Python syntax errors or undefined names
-          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-          # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-          flake8 . --count --exit-zero --ignore=E7,F841,E301,E302,E303 --max-complexity=10 --max-line-length=127 --statistics
-      - name: Run core KERI tests
+          ruff check
+      - name: Check formatting
+        run: |
+          ruff format --check
+      - name: Run core KERIA tests
         run: |
           pytest tests/
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run docker container
+        # Ensure that the image can be built and started
+        run: docker compose up --build --wait
 
   coverage:
     runs-on: ubuntu-latest
