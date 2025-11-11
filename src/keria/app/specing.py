@@ -405,7 +405,7 @@ class AgentSpecResource:
             "MultisigRotateEmbeds",
             schema=marshmallow_dataclass.class_schema(grouping.MultisigRotateEmbeds),
         )
-        self.spec.components.schemas["MultisigInceptEmbeds"]["properties"]["rot"] = {
+        self.spec.components.schemas["MultisigRotateEmbeds"]["properties"]["rot"] = {
             "$ref": "#/components/schemas/Rot"
         }
 
