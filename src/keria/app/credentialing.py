@@ -1031,6 +1031,8 @@ class CredentialResourceEnd:
                     schema:
                         $ref: '#/components/schemas/Credential'
            400:
+             description: The requested credential is not a verified credential.
+           404:
              description: The requested credential was not found.
         """
         agent = req.context.agent
@@ -1040,6 +1042,11 @@ class CredentialResourceEnd:
                 rep.content_type = "application/json+cesr"
                 data = CredentialResourceEnd.outputCred(agent.hby, agent.rgy, said)
             else:
+                if agent.rgy.reger.saved.get(keys=(said,)) is None:
+                    raise falcon.HTTPBadRequest(
+                        description=f"{said} is not a verified credential"
+                    )
+
                 rep.content_type = "application/json"
                 creds = agent.rgy.reger.cloneCreds(
                     [coring.Saider(qb64=said)], db=agent.hby.db
