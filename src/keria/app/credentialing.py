@@ -1042,7 +1042,7 @@ class CredentialResourceEnd:
             raise falcon.HTTPNotFound(
                 description=f"credential for said {said} not found."
             )
-        
+
         if accept == "application/json+cesr":
             rep.content_type = "application/json+cesr"
             data = CredentialResourceEnd.outputCred(agent.hby, agent.rgy, said)
