@@ -1030,8 +1030,6 @@ class CredentialResourceEnd:
                   application/json+cesr:
                     schema:
                         $ref: '#/components/schemas/Credential'
-           400:
-             description: The requested credential is not a verified credential.
            404:
              description: The requested credential was not found.
         """
