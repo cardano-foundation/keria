@@ -1037,25 +1037,21 @@ class CredentialResourceEnd:
         """
         agent = req.context.agent
         accept = req.get_header("accept")
-        try:
-            if accept == "application/json+cesr":
-                rep.content_type = "application/json+cesr"
-                data = CredentialResourceEnd.outputCred(agent.hby, agent.rgy, said)
-            else:
-                if agent.rgy.reger.saved.get(keys=(said,)) is None:
-                    raise falcon.HTTPBadRequest(
-                        description=f"{said} is not a verified credential"
-                    )
 
-                rep.content_type = "application/json"
-                creds = agent.rgy.reger.cloneCreds(
-                    [coring.Saider(qb64=said)], db=agent.hby.db
-                )
-                data = json.dumps(creds[0]).encode("utf-8")
-        except kering.MissingEntryError:
+        if agent.rgy.reger.saved.get(keys=(said,)) is None:
             raise falcon.HTTPNotFound(
                 description=f"credential for said {said} not found."
             )
+        
+        if accept == "application/json+cesr":
+            rep.content_type = "application/json+cesr"
+            data = CredentialResourceEnd.outputCred(agent.hby, agent.rgy, said)
+        else:
+            rep.content_type = "application/json"
+            creds = agent.rgy.reger.cloneCreds(
+                [coring.Saider(qb64=said)], db=agent.hby.db
+            )
+            data = json.dumps(creds[0]).encode("utf-8")
 
         rep.status = falcon.HTTP_200
         rep.data = bytes(data)

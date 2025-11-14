@@ -561,14 +561,14 @@ def test_credentialing_ends(helpers, seeder):
             "/credentials/EDqDrGuzned0HOKFTLqd7m7O7WGE5zYIOHrlCq4EnWxy"
         )
 
-        # Non-existent credential should return 400 (not verified)
-        assert res.status_code == 400
+        # Non-existent credential should return 404 (not found)
+        assert res.status_code == 404
         assert res.json == {
-            "description": "EDqDrGuzned0HOKFTLqd7m7O7WGE5zYIOHrlCq4EnWxy is not a verified credential",
-            "title": "400 Bad Request",
+            "description": "credential for said EDqDrGuzned0HOKFTLqd7m7O7WGE5zYIOHrlCq4EnWxy not found.",
+            "title": "404 Not Found",
         }
 
-        # Same credential with application/json+cesr should return 404 (not found)
+        # Same credential with application/json+cesr should also return 404 (not found)
         headers = {"Accept": "application/json+cesr"}
         res = client.simulate_get(
             "/credentials/EDqDrGuzned0HOKFTLqd7m7O7WGE5zYIOHrlCq4EnWxy", headers=headers
@@ -623,14 +623,14 @@ def test_credentialing_ends(helpers, seeder):
         assert res.status_code == 204
 
         res = client.simulate_get(f"/credentials/{saids[0]}")
-        # Deleted credential with default headers should return 400 (not verified)
-        assert res.status_code == 400
+        # Deleted credential should return 404 (not found)
+        assert res.status_code == 404
         assert res.json == {
-            "description": f"{saids[0]} is not a verified credential",
-            "title": "400 Bad Request",
+            "description": f"credential for said {saids[0]} not found.",
+            "title": "404 Not Found",
         }
 
-        # Deleted credential with application/json+cesr should return 404 (not found)
+        # Deleted credential with application/json+cesr should also return 404 (not found)
         headers = {"Accept": "application/json+cesr"}
         res = client.simulate_get(f"/credentials/{saids[0]}", headers=headers)
         assert res.status_code == 404
