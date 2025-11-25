@@ -15,7 +15,7 @@ from keri.core import coring, eventing, serdering
 from keri.peer import exchanging
 from keri.help import ogler
 from keria.core import httping
-from keria.app import agenting
+from keria.app import aiding
 
 logger = ogler.getLogger()
 
@@ -158,7 +158,7 @@ class ExchangeCollectionEnd:
 class ExchangeResource:
     """Data class for exchange message resource"""
 
-    exn: Union["agenting.EXN_V_1", "agenting.EXN_V_2"]  # type: ignore
+    exn: Union["aiding.EXN_V_1", "aiding.EXN_V_2"]  # type: ignore
     pathed: dict
 
     def to_dict(self):
