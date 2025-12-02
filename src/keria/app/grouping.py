@@ -18,6 +18,7 @@ from keri.kering import SerializeError
 
 from keria.core import httping, longrunning
 from keria.app import aiding, credentialing, agenting
+from keria.peer import exchanging
 
 logger = ogler.getLogger()
 
@@ -313,7 +314,7 @@ class MultisigRpyEmbeds:
 
 @dataclass
 class MultisigExnEmbeds:
-    exn: Union["aiding.EXN_V_1", "aiding.EXN_V_2"]  # type: ignore
+    exn: Union["exchanging.EXN_V_1", "exchanging.EXN_V_2"]  # type: ignore
 
 
 @dataclass
@@ -376,7 +377,7 @@ ExnEmbeds = Union[
 
 @dataclass
 class ExnMultisig:
-    exn: Union["aiding.EXN_V_1", "aiding.EXN_V_2"]  # type: ignore
+    exn: Union["exchanging.EXN_V_1", "exchanging.EXN_V_2"]  # type: ignore
     paths: dict
     groupName: Optional[str] = None
     memberName: Optional[str] = None

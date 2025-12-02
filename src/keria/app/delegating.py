@@ -239,11 +239,7 @@ class DelegatorEnd:
                 content:
                   application/json:
                     schema:
-                      oneOf:
-                        - $ref: '#/components/schemas/GroupOperation'
-                        - $ref: '#/components/schemas/WitnessOperation'
-                        - $ref: '#/components/schemas/DelegationOperation'
-                        - $ref: '#/components/schemas/DoneOperation'
+                      - $ref: '#/components/schemas/DelegatorOperation'
             400:
                 description: Bad request. This could be due to missing or invalid parameters.
             404:

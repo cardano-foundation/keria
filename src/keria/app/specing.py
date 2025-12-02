@@ -105,12 +105,20 @@ class AgentSpecResource:
             schema=marshmallow_dataclass.class_schema(agenting.VCP_V_1)(),
         )
         self.spec.components.schema(
+            "ISS_V_1",
+            schema=marshmallow_dataclass.class_schema(agenting.ISS_V_1)(),
+        )
+        self.spec.components.schema(
+            "REV_V_1",
+            schema=marshmallow_dataclass.class_schema(agenting.REV_V_1)(),
+        )
+        self.spec.components.schema(
             "EXN_V_1",
-            schema=marshmallow_dataclass.class_schema(aiding.EXN_V_1)(),
+            schema=marshmallow_dataclass.class_schema(exchanging.EXN_V_1)(),
         )
         self.spec.components.schema(
             "EXN_V_2",
-            schema=marshmallow_dataclass.class_schema(aiding.EXN_V_2)(),
+            schema=marshmallow_dataclass.class_schema(exchanging.EXN_V_2)(),
         )
         self.spec.components.schema(
             "Credential",
@@ -184,11 +192,6 @@ class AgentSpecResource:
         credentialSchema["properties"]["status"] = {
             "$ref": "#/components/schemas/CredentialState"
         }
-
-        # Operation
-        operationSchema = self.spec.components.schemas["Operation"]
-        operationSchema["properties"]["metadata"] = {"type": "object"}
-        operationSchema["properties"]["response"] = {"type": "object"}
 
         # Registries
         self.spec.components.schema(
@@ -279,13 +282,6 @@ class AgentSpecResource:
         self.spec.components.schema(
             "EndRole", schema=marshmallow_dataclass.class_schema(aiding.EndRole)()
         )
-
-        self.spec.components.schemas["Rpy"] = {
-            "oneOf": [
-                {"$ref": "#/components/schemas/RPY_V_1"},
-                {"$ref": "#/components/schemas/RPY_V_2"},
-            ]
-        }
 
         # Register the Challenge schema
         self.spec.components.schema(
@@ -537,6 +533,8 @@ class AgentSpecResource:
             "oneOf": [
                 {"$ref": "#/components/schemas/DIP_V_1"},
                 {"$ref": "#/components/schemas/DIP_V_2"},
+                {"$ref": "#/components/schemas/DRT_V_1"},
+                {"$ref": "#/components/schemas/DRT_V_2"},
             ]
         }
 
@@ -557,7 +555,9 @@ class AgentSpecResource:
             "ChallengeOperation",
             schema=marshmallow_dataclass.class_schema(optypes.ChallengeOperation)(),
         )
-        self.spec.components.schemas["ChallengeOperation"]["properties"]["response"] = {
+        self.spec.components.schemas["ChallengeOperationResponse"]["properties"][
+            "exn"
+        ] = {
             "oneOf": [
                 {"$ref": "#/components/schemas/EXN_V_1"},
                 {"$ref": "#/components/schemas/EXN_V_2"},
@@ -629,8 +629,10 @@ class AgentSpecResource:
             "oneOf": [
                 {"$ref": "#/components/schemas/ROT_V_1"},
                 {"$ref": "#/components/schemas/ROT_V_2"},
-                {"$ref": "#/components/schemas/EXN_V_1"},
-                {"$ref": "#/components/schemas/EXN_V_2"},
+                {"$ref": "#/components/schemas/DRT_V_1"},
+                {"$ref": "#/components/schemas/DRT_V_2"},
+                {"$ref": "#/components/schemas/IXN_V_1"},
+                {"$ref": "#/components/schemas/IXN_V_2"},
             ]
         }
         self.spec.components.schema(
@@ -657,16 +659,9 @@ class AgentSpecResource:
             "GroupOperation",
             schema=marshmallow_dataclass.class_schema(optypes.GroupOperation)(),
         )
-        self.spec.components.schemas["GroupOperation"]["properties"]["response"] = {
-            "oneOf": [
-                {"$ref": "#/components/schemas/ICP_V_1"},
-                {"$ref": "#/components/schemas/ICP_V_2"},
-                {"$ref": "#/components/schemas/ROT_V_1"},
-                {"$ref": "#/components/schemas/ROT_V_2"},
-                {"$ref": "#/components/schemas/IXN_V_1"},
-                {"$ref": "#/components/schemas/IXN_V_2"},
-            ]
-        }
+        self.spec.components.schemas["GroupOperation"]["properties"]["response"] = (
+            ancEvent
+        )
 
         # DelegatorOperationMetadata
         self.spec.components.schema(

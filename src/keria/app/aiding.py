@@ -88,16 +88,6 @@ class Seal:
     )
 
 
-exnFieldDomV1 = serdering.SerderKERI.Fields[serdering.Protocols.keri][
-    serdering.Vrsn_1_0
-][serdering.Ilks.exn]
-EXN_V_1, EXNSchema_V_1 = dataclassFromFielddom("EXN_V_1", exnFieldDomV1)
-
-exnFieldDomV2 = serdering.SerderKERI.Fields[serdering.Protocols.keri][
-    serdering.Vrsn_2_0
-][serdering.Ilks.exn]
-EXN_V_2, EXNSchema_V_2 = dataclassFromFielddom("EXN_V_2", exnFieldDomV2)
-
 ixnFieldDomV1 = SerderKERI.Fields[Protocols.keri][Vrsn_1_0][coring.Ilks.ixn]
 IXN_V_1, IXNSchema_V_1 = dataclassFromFielddom("IXN_V_1", ixnFieldDomV1)
 ixnFieldDomV2 = SerderKERI.Fields[Protocols.keri][Vrsn_2_0][coring.Ilks.ixn]

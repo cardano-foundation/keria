@@ -12,6 +12,7 @@ from marshmallow_dataclass import class_schema
 from keria.app import aiding, credentialing
 from keria.app.credentialing import (
     Anchor,
+    AnchoringEvent,
     ACDC_V_1,
     ACDC_V_2,
     ICP_V_1,
@@ -22,14 +23,15 @@ from keria.app.credentialing import (
     DIP_V_2,
     IXN_V_1,
     IXN_V_2,
+    DRT_V_1,
+    DRT_V_2,
 )
 from keria.app.aiding import (
     KeyStateRecord,
-    EXN_V_1,
-    EXN_V_2,
     RPY_V_1,
     RPY_V_2,
 )
+from keria.peer.exchanging import EXN_V_1, EXN_V_2
 from keria.core.longrunning import Operation
 
 
@@ -127,7 +129,7 @@ class DelegationOperation(Operation):
             )
         },
     )
-    response: Union[DIP_V_1, DIP_V_2] = None  # type: ignore
+    response: Union[DIP_V_1, DIP_V_2, DRT_V_1, DRT_V_2] = None  # type: ignore
 
 
 @dataclass
@@ -165,7 +167,7 @@ class GroupOperation(Operation):
             )
         },
     )
-    response: Union[ICP_V_1, ICP_V_2, ROT_V_1, ROT_V_2, IXN_V_1, IXN_V_2] = None  # type: ignore
+    response: AnchoringEvent = None  # type: ignore
 
 
 @dataclass
@@ -272,21 +274,33 @@ class LocSchemeOperation(Operation):
 
 
 @dataclass
-class ChallengeMetadata:
+class ChallengeOperationMetadata:
     words: list[str]
 
 
 @dataclass
+class ChallengeOperationResponse:
+    exn: Union[EXN_V_1, EXN_V_2]  # type: ignore
+
+
+@dataclass
 class ChallengeOperation(Operation):
-    metadata: ChallengeMetadata = field(
-        default_factory=ChallengeMetadata,
+    metadata: ChallengeOperationMetadata = field(
+        default_factory=ChallengeOperationMetadata,
         metadata={
             "marshmallow_field": fields.Nested(
-                class_schema(ChallengeMetadata), required=False
+                class_schema(ChallengeOperationMetadata), required=False
             )
         },
     )
-    response: Union[EXN_V_1, EXN_V_2] = None  # type: ignore
+    response: ChallengeOperationResponse = field(
+        default_factory=ChallengeOperationResponse,
+        metadata={
+            "marshmallow_field": fields.Nested(
+                class_schema(ChallengeOperationResponse), required=False
+            )
+        },
+    )
 
 
 @dataclass
@@ -336,7 +350,7 @@ class RegistryOperation(Operation):
 @dataclass
 class CredentialOperationMetadata:
     ced: Union[ACDC_V_1, ACDC_V_2]  # type: ignore
-    depends: Union[ROT_V_1, ROT_V_2, EXN_V_1, EXN_V_2] = None  # type: ignore
+    depends: Union[ROT_V_1, ROT_V_2, DRT_V_1, DRT_V_2, IXN_V_1, IXN_V_2] = None  # type: ignore
 
 
 @dataclass
