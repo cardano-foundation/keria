@@ -359,12 +359,7 @@ class RegistryCollectionEnd:
               content:
                   application/json:
                     schema:
-                      oneOf:
-                        - $ref: '#/components/schemas/GroupOperation'
-                        - $ref: '#/components/schemas/WitnessOperation'
-                        - $ref: '#/components/schemas/DelegationOperation'
-                        - $ref: '#/components/schemas/DoneOperation'
-                        - $ref: '#/components/schemas/RegistryOperation'
+                      $ref: '#/components/schemas/RegistryOperation'
            404:
               description: The requested registry is not a valid reference to an identifier.
            400:
@@ -911,7 +906,7 @@ class CredentialCollectionEnd:
                 content:
                     application/json:
                         schema:
-                            $ref: '#/components/schemas/Credential'
+                            $ref: '#/components/schemas/CredentialOperation'
             400:
                 description: Bad request. This could be due to missing or invalid data.
 
