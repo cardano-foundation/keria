@@ -7,7 +7,7 @@ from apispec.ext.marshmallow import MarshmallowPlugin
 
 from keria.app import aiding, agenting, grouping, notifying
 from keria.peer import exchanging
-from ..core import longrunning
+from ..core import longrunning, optypes
 from ..utils.openapi import applyAltConstraintsToOpenApiSchema
 from . import credentialing
 from keri.core import coring
@@ -105,12 +105,20 @@ class AgentSpecResource:
             schema=marshmallow_dataclass.class_schema(agenting.VCP_V_1)(),
         )
         self.spec.components.schema(
+            "ISS_V_1",
+            schema=marshmallow_dataclass.class_schema(agenting.ISS_V_1)(),
+        )
+        self.spec.components.schema(
+            "REV_V_1",
+            schema=marshmallow_dataclass.class_schema(agenting.REV_V_1)(),
+        )
+        self.spec.components.schema(
             "EXN_V_1",
-            schema=marshmallow_dataclass.class_schema(agenting.EXN_V_1)(),
+            schema=marshmallow_dataclass.class_schema(exchanging.EXN_V_1)(),
         )
         self.spec.components.schema(
             "EXN_V_2",
-            schema=marshmallow_dataclass.class_schema(agenting.EXN_V_2)(),
+            schema=marshmallow_dataclass.class_schema(exchanging.EXN_V_2)(),
         )
         self.spec.components.schema(
             "Credential",
@@ -184,11 +192,6 @@ class AgentSpecResource:
         credentialSchema["properties"]["status"] = {
             "$ref": "#/components/schemas/CredentialState"
         }
-
-        # Operation
-        operationSchema = self.spec.components.schemas["Operation"]
-        operationSchema["properties"]["metadata"] = {"type": "object"}
-        operationSchema["properties"]["response"] = {"type": "object"}
 
         # Registries
         self.spec.components.schema(
@@ -279,13 +282,6 @@ class AgentSpecResource:
         self.spec.components.schema(
             "EndRole", schema=marshmallow_dataclass.class_schema(aiding.EndRole)()
         )
-
-        self.spec.components.schemas["Rpy"] = {
-            "oneOf": [
-                {"$ref": "#/components/schemas/RPY_V_1"},
-                {"$ref": "#/components/schemas/RPY_V_2"},
-            ]
-        }
 
         # Register the Challenge schema
         self.spec.components.schema(
@@ -485,6 +481,229 @@ class AgentSpecResource:
         )
         exnMSchema = self.spec.components.schemas["ExnMultisig"]
         exnMSchema["properties"]["exn"] = {"$ref": "#/components/schemas/Exn"}
+
+        # Register the OOBIOperation schema
+        self.spec.components.schema(
+            "OOBIOperation",
+            schema=marshmallow_dataclass.class_schema(optypes.OOBIOperation)(),
+        )
+
+        # Register the QueryOperation schema
+        self.spec.components.schema(
+            "QueryOperation",
+            schema=marshmallow_dataclass.class_schema(optypes.QueryOperation)(),
+        )
+
+        # Register the EndRoleOperation schema
+        self.spec.components.schema(
+            "EndRoleOperation",
+            schema=marshmallow_dataclass.class_schema(optypes.EndRoleOperation)(),
+        )
+        self.spec.components.schemas["EndRoleOperation"]["properties"]["response"] = {
+            "oneOf": [
+                {"$ref": "#/components/schemas/RPY_V_1"},
+                {"$ref": "#/components/schemas/RPY_V_2"},
+            ]
+        }
+
+        # Register the WitnessOperation schema
+        self.spec.components.schema(
+            "WitnessOperation",
+            schema=marshmallow_dataclass.class_schema(optypes.WitnessOperation)(),
+        )
+        self.spec.components.schemas["WitnessOperation"]["properties"]["response"] = {
+            "oneOf": [
+                {"$ref": "#/components/schemas/ICP_V_1"},
+                {"$ref": "#/components/schemas/ICP_V_2"},
+                {"$ref": "#/components/schemas/ROT_V_1"},
+                {"$ref": "#/components/schemas/ROT_V_2"},
+                {"$ref": "#/components/schemas/IXN_V_1"},
+                {"$ref": "#/components/schemas/IXN_V_2"},
+            ]
+        }
+
+        # Register the DelegationOperation schema
+        self.spec.components.schema(
+            "DelegationOperation",
+            schema=marshmallow_dataclass.class_schema(optypes.DelegationOperation)(),
+        )
+        self.spec.components.schemas["DelegationOperation"]["properties"][
+            "response"
+        ] = {
+            "oneOf": [
+                {"$ref": "#/components/schemas/DIP_V_1"},
+                {"$ref": "#/components/schemas/DIP_V_2"},
+                {"$ref": "#/components/schemas/DRT_V_1"},
+                {"$ref": "#/components/schemas/DRT_V_2"},
+            ]
+        }
+
+        # RegistryOperation
+        self.spec.components.schema(
+            "RegistryOperation",
+            schema=marshmallow_dataclass.class_schema(optypes.RegistryOperation)(),
+        )
+
+        # LocSchemeOperation
+        self.spec.components.schema(
+            "LocSchemeOperation",
+            schema=marshmallow_dataclass.class_schema(optypes.LocSchemeOperation)(),
+        )
+
+        # ChallengeOperation
+        self.spec.components.schema(
+            "ChallengeOperation",
+            schema=marshmallow_dataclass.class_schema(optypes.ChallengeOperation)(),
+        )
+        self.spec.components.schemas["ChallengeOperationResponse"]["properties"][
+            "exn"
+        ] = {
+            "oneOf": [
+                {"$ref": "#/components/schemas/EXN_V_1"},
+                {"$ref": "#/components/schemas/EXN_V_2"},
+            ]
+        }
+
+        # ExchangeOperation
+        self.spec.components.schema(
+            "ExchangeOperation",
+            schema=marshmallow_dataclass.class_schema(optypes.ExchangeOperation)(),
+        )
+
+        # SubmitOperation
+        self.spec.components.schema(
+            "SubmitOperation",
+            schema=marshmallow_dataclass.class_schema(optypes.SubmitOperation)(),
+        )
+
+        # DoneOperationMetadata
+        self.spec.components.schema(
+            "DoneOperationMetadata",
+            schema=marshmallow_dataclass.class_schema(optypes.DoneOperationMetadata)(),
+        )
+        self.spec.components.schemas["DoneOperationMetadata"]["properties"][
+            "response"
+        ] = {
+            "oneOf": [
+                {"$ref": "#/components/schemas/ICP_V_1"},
+                {"$ref": "#/components/schemas/ICP_V_2"},
+                {"$ref": "#/components/schemas/ROT_V_1"},
+                {"$ref": "#/components/schemas/ROT_V_2"},
+                {"$ref": "#/components/schemas/EXN_V_1"},
+                {"$ref": "#/components/schemas/EXN_V_2"},
+            ]
+        }
+        self.spec.components.schema(
+            "DoneOperation",
+            schema=marshmallow_dataclass.class_schema(optypes.DoneOperation)(),
+        )
+        self.spec.components.schemas["DoneOperation"]["properties"]["response"] = {
+            "oneOf": [
+                {"$ref": "#/components/schemas/ICP_V_1"},
+                {"$ref": "#/components/schemas/ICP_V_2"},
+                {"$ref": "#/components/schemas/ROT_V_1"},
+                {"$ref": "#/components/schemas/ROT_V_2"},
+                {"$ref": "#/components/schemas/EXN_V_1"},
+                {"$ref": "#/components/schemas/EXN_V_2"},
+            ]
+        }
+
+        # CredentialOperation
+        self.spec.components.schema(
+            "CredentialOperationMetadata",
+            schema=marshmallow_dataclass.class_schema(
+                optypes.CredentialOperationMetadata
+            )(),
+        )
+        self.spec.components.schemas["CredentialOperationMetadata"]["properties"][
+            "ced"
+        ] = {
+            "oneOf": [
+                {"$ref": "#/components/schemas/ACDC_V_1"},
+                {"$ref": "#/components/schemas/ACDC_V_2"},
+            ]
+        }
+        self.spec.components.schemas["CredentialOperationMetadata"]["properties"][
+            "depends"
+        ] = {
+            "oneOf": [
+                {"$ref": "#/components/schemas/ROT_V_1"},
+                {"$ref": "#/components/schemas/ROT_V_2"},
+                {"$ref": "#/components/schemas/DRT_V_1"},
+                {"$ref": "#/components/schemas/DRT_V_2"},
+                {"$ref": "#/components/schemas/IXN_V_1"},
+                {"$ref": "#/components/schemas/IXN_V_2"},
+            ]
+        }
+        self.spec.components.schema(
+            "CredentialOperationResponse",
+            schema=marshmallow_dataclass.class_schema(
+                optypes.CredentialOperationResponse
+            )(),
+        )
+        self.spec.components.schemas["CredentialOperationResponse"]["properties"][
+            "ced"
+        ] = {
+            "oneOf": [
+                {"$ref": "#/components/schemas/ACDC_V_1"},
+                {"$ref": "#/components/schemas/ACDC_V_2"},
+            ]
+        }
+        self.spec.components.schema(
+            "CredentialOperation",
+            schema=marshmallow_dataclass.class_schema(optypes.CredentialOperation)(),
+        )
+
+        # GroupOperation
+        self.spec.components.schema(
+            "GroupOperation",
+            schema=marshmallow_dataclass.class_schema(optypes.GroupOperation)(),
+        )
+        self.spec.components.schemas["GroupOperation"]["properties"]["response"] = (
+            ancEvent
+        )
+
+        # DelegatorOperationMetadata
+        self.spec.components.schema(
+            "DelegatorOperationMetadata",
+            schema=marshmallow_dataclass.class_schema(
+                optypes.DelegatorOperationMetadata
+            )(),
+        )
+        self.spec.components.schemas["DelegatorOperationMetadata"]["properties"][
+            "depends"
+        ] = {
+            "oneOf": [
+                {"$ref": "#/components/schemas/GroupOperation"},
+                {"$ref": "#/components/schemas/WitnessOperation"},
+                {"$ref": "#/components/schemas/DoneOperation"},
+            ]
+        }
+
+        # DelegatorOperation
+        self.spec.components.schema(
+            "DelegatorOperation",
+            schema=marshmallow_dataclass.class_schema(optypes.DelegatorOperation)(),
+        )
+
+        self.spec.components.schemas["Operation"] = {
+            "oneOf": [
+                {"$ref": "#/components/schemas/OOBIOperation"},
+                {"$ref": "#/components/schemas/QueryOperation"},
+                {"$ref": "#/components/schemas/EndRoleOperation"},
+                {"$ref": "#/components/schemas/WitnessOperation"},
+                {"$ref": "#/components/schemas/DelegationOperation"},
+                {"$ref": "#/components/schemas/RegistryOperation"},
+                {"$ref": "#/components/schemas/LocSchemeOperation"},
+                {"$ref": "#/components/schemas/ChallengeOperation"},
+                {"$ref": "#/components/schemas/ExchangeOperation"},
+                {"$ref": "#/components/schemas/SubmitOperation"},
+                {"$ref": "#/components/schemas/DoneOperation"},
+                {"$ref": "#/components/schemas/CredentialOperation"},
+                {"$ref": "#/components/schemas/GroupOperation"},
+                {"$ref": "#/components/schemas/DelegatorOperation"},
+            ]
+        }
 
         self.addRoutes(app)
 
