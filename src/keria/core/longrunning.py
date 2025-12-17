@@ -252,10 +252,11 @@ class Monitor:
 
         """
 
-        operation = Operation(
-            name=f"{op.type}.{op.oid}",
-            metadata=op.metadata,
-        )
+        done = False
+        response = None
+        error = None
+        name = f"{op.type}.{op.oid}"
+        metadata = op.metadata
 
         if op.type in (OpTypes.witness,):
             if "pre" not in op.metadata or "sn" not in op.metadata:
@@ -283,8 +284,8 @@ class Monitor:
                         dbing.dgKey(pre=kever.prefixer.qb64, dig=bytes(sdig))
                     )
                     serder = serdering.SerderKERI(raw=bytes(evt))
-                    operation.done = True
-                    operation.response = serder.ked
+                    done = True
+                    response = serder.ked
 
                 else:
                     start = helping.fromIso8601(op.start)
@@ -292,17 +293,17 @@ class Monitor:
                     if (dtnow - start) > datetime.timedelta(
                         seconds=eventing.Kevery.TimeoutPWE
                     ):
-                        operation.done = True
-                        operation.error = OperationStatus(
+                        done = True
+                        error = OperationStatus(
                             code=408,  # Using HTTP error codes here for lack of a better alternative
                             message=f"long running {op.type} for {op.oid} (pre: {pre}) operation timed out before "
                             f"receiving sufficient witness receipts",
                         )
                     else:
-                        operation.done = False
+                        done = False
 
             else:
-                operation.done = False
+                done = False
 
         elif op.type in (OpTypes.oobi,):
             if "oobi" not in op.metadata:
@@ -313,22 +314,22 @@ class Monitor:
             oobi = op.metadata["oobi"]
             obr = self.hby.db.roobi.get(keys=(oobi,))
             if obr is None:
-                operation.done = False
+                done = False
             elif obr.state == Result.resolved:
-                operation.done = True
+                done = True
                 if obr.cid and obr.cid in self.hby.kevers:
                     kever = self.hby.kevers[obr.cid]
-                    operation.response = asdict(kever.state())
+                    response = asdict(kever.state())
                 else:
-                    operation.response = dict(oobi=oobi)
+                    response = dict(oobi=oobi)
 
             elif obr.state == Result.failed:
-                operation.done = True
-                operation.failed = OperationStatus(
+                done = True
+                error = OperationStatus(
                     code=500, message=f"resolving OOBI {op.oid} failed"
                 )
             else:
-                operation.done = False
+                done = False
 
         elif op.type in (OpTypes.delegation,):
             if "pre" not in op.metadata:
@@ -359,10 +360,10 @@ class Monitor:
                     )
                     serder = serdering.SerderKERI(raw=bytes(evt))
 
-                    operation.done = True
-                    operation.response = serder.ked
+                    done = True
+                    response = serder.ked
                 else:
-                    operation.done = False
+                    done = False
             elif (
                 reqtee in op.metadata
             ):  # delegator detects delegatee delegation success
@@ -371,12 +372,12 @@ class Monitor:
                 if (
                     teepre in self.hby.kevers
                 ):  # delegatee dip has been processed by the delegator
-                    operation.done = True
-                    operation.response = op.metadata[reqtee]
+                    done = True
+                    response = op.metadata[reqtee]
                 else:
                     hab = self.hby.habByPre(kever.prefixer.qb64)
                     delegating.approveDelegation(hab, anc)
-                    operation.done = False
+                    done = False
             else:
                 raise falcon.HTTPBadRequest(
                     description=f"longrunning operation type {op.type} requires one of {required}, but are missing from request"
@@ -399,10 +400,10 @@ class Monitor:
                 )
                 serder = serdering.SerderKERI(raw=bytes(evt))
 
-                operation.done = True
-                operation.response = serder.ked
+                done = True
+                response = serder.ked
             else:
-                operation.done = False
+                done = False
 
         elif op.type in (OpTypes.query,):
             if "pre" not in op.metadata:
@@ -412,24 +413,24 @@ class Monitor:
 
             pre = op.metadata["pre"]
             if pre not in self.hby.kevers:
-                operation.done = False
+                done = False
 
             else:
                 kever = self.hby.kevers[pre]
                 if "sn" in op.metadata:
                     sn = int(op.metadata["sn"], 16)
                     if kever.sn >= sn:
-                        operation.done = True
-                        operation.response = asdict(kever.state())
+                        done = True
+                        response = asdict(kever.state())
                     else:
-                        operation.done = False
+                        done = False
                 elif "anchor" in op.metadata:
                     anchor = op.metadata["anchor"]
                     if self.hby.db.findAnchoringSealEvent(pre, seal=anchor) is not None:
-                        operation.done = True
-                        operation.response = asdict(kever.state())
+                        done = True
+                        response = asdict(kever.state())
                     else:
-                        operation.done = False
+                        done = False
                 else:
                     ksn = None
                     for _, saider in self.hby.db.knas.getItemIter(keys=(pre,)):
@@ -437,10 +438,10 @@ class Monitor:
                         break
 
                     if ksn and ksn.d == kever.serder.said:
-                        operation.done = True
-                        operation.response = asdict(kever.state())
+                        done = True
+                        response = asdict(kever.state())
                     else:
-                        operation.done = False
+                        done = False
 
         elif op.type in (OpTypes.registry,):
             if "pre" not in op.metadata or "anchor" not in op.metadata:
@@ -456,10 +457,10 @@ class Monitor:
 
             anchor = op.metadata["anchor"]
             if self.hby.db.findAnchoringSealEvent(pre, seal=anchor) is not None:
-                operation.done = True
-                operation.response = dict(anchor=anchor)
+                done = True
+                response = dict(anchor=anchor)
             else:
-                operation.done = False
+                done = False
 
         elif op.type in (OpTypes.credential,):
             if "ced" not in op.metadata:
@@ -469,17 +470,17 @@ class Monitor:
 
             ced = op.metadata["ced"]
             if self.credentialer.complete(ced["d"]):
-                operation.done = True
-                operation.response = dict(ced=ced)
+                done = True
+                response = dict(ced=ced)
             else:
-                operation.done = False
+                done = False
 
         elif op.type in (OpTypes.exchange,):
             if self.exchanger.complete(op.oid):
-                operation.done = True
-                operation.response = dict(said=op.oid)
+                done = True
+                response = dict(said=op.oid)
             else:
-                operation.done = False
+                done = False
 
         elif op.type in (OpTypes.endrole,):
             if (
@@ -499,10 +500,10 @@ class Monitor:
             if end and (end.enabled or end.allowed):
                 saider = self.hby.db.eans.get(keys=(cid, role, eid))
                 serder = self.hby.db.rpys.get(keys=(saider.qb64,))
-                operation.done = True
-                operation.response = serder.ked
+                done = True
+                response = serder.ked
             else:
-                operation.done = False
+                done = False
 
         elif op.type in (OpTypes.locscheme,):
             if (
@@ -520,14 +521,14 @@ class Monitor:
 
             loc = self.hby.db.locs.get(keys=(eid, scheme))
             if loc:
-                operation.done = True
-                operation.response = dict(eid=eid, scheme=scheme, url=url)
+                done = True
+                response = dict(eid=eid, scheme=scheme, url=url)
             else:
-                operation.done = False
+                done = False
 
         elif op.type in (OpTypes.challenge,):
             if op.oid not in self.hby.kevers:
-                operation.done = False
+                done = False
 
             if "words" not in op.metadata:
                 raise kering.ValidationError(
@@ -544,10 +545,10 @@ class Monitor:
                     break
 
             if found:
-                operation.done = True
-                operation.response = dict(exn=exn.ked)
+                done = True
+                response = dict(exn=exn.ked)
             else:
-                operation.done = False
+                done = False
 
         elif op.type in (OpTypes.submit,):
             kever = self.hby.kevers[op.oid]
@@ -556,35 +557,51 @@ class Monitor:
                 and len(self.submitter.submits) == 0
                 and len(self.submitter.doers) == 0
             ):
-                operation.done = True
-                operation.response = asdict(kever.state())
+                done = True
+                response = asdict(kever.state())
             else:
                 start = helping.fromIso8601(op.start)
                 dtnow = helping.nowUTC()
                 if (dtnow - start) > datetime.timedelta(
                     seconds=eventing.Kevery.TimeoutPWE
                 ):
-                    operation.done = True
-                    operation.error = OperationStatus(
+                    done = True
+                    error = OperationStatus(
                         code=408,  # Using HTTP error codes here for lack of a better alternative
                         message=f"long running {op.type} for {op.oid} operation timed out before "
                         f"receiving sufficient witness receipts",
                     )
                 else:
-                    operation.done = False
+                    done = False
 
         elif op.type in (OpTypes.done,):
-            operation.done = True
-            operation.response = op.metadata["response"]
+            done = True
+            response = op.metadata["response"]
 
         else:
-            operation.done = True
-            operation.error = OperationStatus(
+            done = True
+            error = OperationStatus(
                 code=404,  # Using HTTP error codes here for lack of a better alternative
                 message=f"long running operation type {op.type} unknown",
             )
 
-        return operation
+        if error is not None:
+            return FailedOperation(
+                name=name,
+                metadata=metadata,
+                error=error,
+            )
+        elif done:
+            return CompletedOperation(
+                name=name,
+                metadata=metadata,
+                response=response,
+            )
+        else:
+            return PendingOperation(
+                name=name,
+                metadata=metadata,
+            )
 
 
 class OperationCollectionEnd:

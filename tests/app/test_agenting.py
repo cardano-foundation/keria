@@ -894,10 +894,8 @@ def test_query_ends(helpers):
         assert result.status == falcon.HTTP_202
         assert result.json == {
             "done": False,
-            "error": None,
             "metadata": {"pre": "EI7AkI40M11MS7lkTCb10JC9-nDt-tXwQh44OHAFlv_9"},
             "name": "query.EI7AkI40M11MS7lkTCb10JC9-nDt-tXwQh44OHAFlv_9",
-            "response": None,
         }
         assert len(agent.queries) == 1
 
@@ -906,13 +904,11 @@ def test_query_ends(helpers):
         assert result.status == falcon.HTTP_202
         assert result.json == {
             "done": False,
-            "error": None,
             "metadata": {
                 "pre": "EI7AkI40M11MS7lkTCb10JC9-nDt-tXwQh44OHAFlv_9",
                 "sn": "2",
             },
             "name": "query.EI7AkI40M11MS7lkTCb10JC9-nDt-tXwQh44OHAFlv_9.2",
-            "response": None,
         }
         assert len(agent.queries) == 2
 
@@ -928,7 +924,6 @@ def test_query_ends(helpers):
         assert result.status == falcon.HTTP_202
         assert result.json == {
             "done": False,
-            "error": None,
             "metadata": {
                 "pre": "EI7AkI40M11MS7lkTCb10JC9-nDt-tXwQh44OHAFlv_9",
                 "anchor": {
@@ -938,7 +933,6 @@ def test_query_ends(helpers):
                 },
             },
             "name": "query.EI7AkI40M11MS7lkTCb10JC9-nDt-tXwQh44OHAFlv_9.EHgwVwQT15OJvilVvW57HE4w0-GPs_Stj2OFoAHZSysY",
-            "response": None,
         }
         assert len(agent.queries) == 3
 
@@ -1148,9 +1142,8 @@ def test_submitter(seeder, helpers):
         assert resSubmit.text == json.dumps(
             dict(
                 name="submit.EKOrePIIU8ynKwOOLxs56ZxxQswUFNV8-cyYFt3nBJHR",
-                error=None,
-                done=True,
                 metadata={"alias": "pal", "sn": 0},
+                done=True,
                 response={
                     "vn": [1, 0],
                     "i": "EKOrePIIU8ynKwOOLxs56ZxxQswUFNV8-cyYFt3nBJHR",
