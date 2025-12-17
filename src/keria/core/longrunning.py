@@ -9,7 +9,7 @@ import datetime
 from collections import namedtuple
 from dataclasses import dataclass, asdict, field
 from marshmallow import fields
-from typing import Optional, Dict
+from typing import Literal, Optional, Dict, Union
 
 import falcon
 import json
@@ -59,8 +59,29 @@ class OperationStatus:
 
 @dataclass_json
 @dataclass
-class Operation:
+class BaseOperation:
     name: str
+    metadata: Optional[dict] = None
+    done: bool = False
+
+
+@dataclass_json
+@dataclass
+class PendingOperation(BaseOperation):
+    done: Literal[False] = False
+
+
+@dataclass_json
+@dataclass
+class CompletedOperation(BaseOperation):
+    done: Literal[True] = True
+    response: Optional[dict] = None
+
+
+@dataclass_json
+@dataclass
+class FailedOperation(BaseOperation):
+    done: Literal[True] = True
     error: Optional[OperationStatus] = field(
         default=None,
         metadata={
@@ -69,11 +90,9 @@ class Operation:
             )
         },
     )
-    done: bool = field(
-        default=False, metadata={"marshmallow_field": fields.Boolean(allow_none=False)}
-    )
-    metadata: Optional[dict] = None
-    response: Optional[dict] = None
+
+
+Operation = Union[PendingOperation, CompletedOperation, FailedOperation]
 
 
 @dataclass
@@ -205,7 +224,7 @@ class Monitor:
             except Exception as err:
                 # self.status may throw an exception.
                 # Handling error by returning an operation with error status
-                return Operation(
+                return FailedOperation(
                     name=f"{op.type}.{op.oid}",
                     metadata=op.metadata,
                     done=True,
