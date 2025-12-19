@@ -46,7 +46,7 @@ class OOBIMetadata:
 
 
 @dataclass
-class PendingOOBIOperation(PendingOperation):
+class BaseOOBIOperation:
     metadata: OOBIMetadata = field(
         default_factory=OOBIMetadata,
         metadata={
@@ -58,40 +58,29 @@ class PendingOOBIOperation(PendingOperation):
 
 
 @dataclass
-class CompletedOOBIOperation(CompletedOperation):
-    metadata: OOBIMetadata = field(
-        default_factory=OOBIMetadata,
-        metadata={
-            "marshmallow_field": fields.Nested(
-                class_schema(OOBIMetadata), required=False
-            )
-        },
-    )
+class PendingOOBIOperation(BaseOOBIOperation, PendingOperation):
+    pass
+
+
+@dataclass
+class CompletedOOBIOperation(BaseOOBIOperation, CompletedOperation):
     response: aiding.KeyStateRecord = field(
         default_factory=aiding.KeyStateRecord,
         metadata={
             "marshmallow_field": fields.Nested(
-                class_schema(aiding.KeyStateRecord), required=False
+                class_schema(aiding.KeyStateRecord), required=True
             )
         },
     )
 
 
 @dataclass
-class FailedOOBIOperation(FailedOperation):
-    metadata: OOBIMetadata = field(
-        default_factory=OOBIMetadata,
-        metadata={
-            "marshmallow_field": fields.Nested(
-                class_schema(OOBIMetadata), required=False
-            )
-        },
-    )
-    error: Optional[OperationStatus] = field(
+class FailedOOBIOperation(BaseOOBIOperation, FailedOperation):
+    error: OperationStatus = field(
         default=None,
         metadata={
             "marshmallow_field": fields.Nested(
-                class_schema(OperationStatus), required=False
+                class_schema(OperationStatus), required=True
             )
         },
     )
@@ -115,7 +104,7 @@ class QueryMetadata:
 
 
 @dataclass
-class PendingQueryOperation(PendingOperation):
+class BaseQueryOperation:
     metadata: QueryMetadata = field(
         default_factory=QueryMetadata,
         metadata={
@@ -127,40 +116,29 @@ class PendingQueryOperation(PendingOperation):
 
 
 @dataclass
-class CompletedQueryOperation(CompletedOperation):
-    metadata: QueryMetadata = field(
-        default_factory=QueryMetadata,
-        metadata={
-            "marshmallow_field": fields.Nested(
-                class_schema(QueryMetadata), required=False
-            )
-        },
-    )
+class PendingQueryOperation(BaseQueryOperation, PendingOperation):
+    pass
+
+
+@dataclass
+class CompletedQueryOperation(BaseQueryOperation, CompletedOperation):
     response: aiding.KeyStateRecord = field(
         default_factory=aiding.KeyStateRecord,
         metadata={
             "marshmallow_field": fields.Nested(
-                class_schema(aiding.KeyStateRecord), required=False
+                class_schema(aiding.KeyStateRecord), required=True
             )
         },
     )
 
 
 @dataclass
-class FailedQueryOperation(FailedOperation):
-    metadata: QueryMetadata = field(
-        default_factory=QueryMetadata,
-        metadata={
-            "marshmallow_field": fields.Nested(
-                class_schema(QueryMetadata), required=False
-            )
-        },
-    )
-    error: Optional[OperationStatus] = field(
+class FailedQueryOperation(BaseQueryOperation, FailedOperation):
+    error: OperationStatus = field(
         default=None,
         metadata={
             "marshmallow_field": fields.Nested(
-                class_schema(OperationStatus), required=False
+                class_schema(OperationStatus), required=True
             )
         },
     )
@@ -178,7 +156,7 @@ class WitnessMetadata:
 
 
 @dataclass
-class PendingWitnessOperation(PendingOperation):
+class BaseWitnessOperation:
     metadata: WitnessMetadata = field(
         default_factory=WitnessMetadata,
         metadata={
@@ -190,33 +168,24 @@ class PendingWitnessOperation(PendingOperation):
 
 
 @dataclass
-class CompletedWitnessOperation(CompletedOperation):
-    metadata: WitnessMetadata = field(
-        default_factory=WitnessMetadata,
-        metadata={
-            "marshmallow_field": fields.Nested(
-                class_schema(WitnessMetadata), required=False
-            )
-        },
-    )
-    response: Union[ICP_V_1, ICP_V_2, ROT_V_1, ROT_V_2, IXN_V_1, IXN_V_2] = None  # type: ignore
+class PendingWitnessOperation(BaseWitnessOperation, PendingOperation):
+    pass
 
 
 @dataclass
-class FailedWitnessOperation(FailedOperation):
-    metadata: WitnessMetadata = field(
-        default_factory=WitnessMetadata,
-        metadata={
-            "marshmallow_field": fields.Nested(
-                class_schema(WitnessMetadata), required=False
-            )
-        },
-    )
-    error: Optional[OperationStatus] = field(
+class CompletedWitnessOperation(BaseWitnessOperation, CompletedOperation):
+    response: Union[ICP_V_1, ICP_V_2, ROT_V_1, ROT_V_2, IXN_V_1, IXN_V_2] = field(
+        default=None, metadata={"required": True}
+    )  # type: ignore
+
+
+@dataclass
+class FailedWitnessOperation(BaseWitnessOperation, FailedOperation):
+    error: OperationStatus = field(
         default=None,
         metadata={
             "marshmallow_field": fields.Nested(
-                class_schema(OperationStatus), required=False
+                class_schema(OperationStatus), required=True
             )
         },
     )
@@ -234,7 +203,7 @@ class DelegationMetadata:
 
 
 @dataclass
-class PendingDelegationOperation(PendingOperation):
+class BaseDelegationOperation:
     metadata: DelegationMetadata = field(
         default_factory=DelegationMetadata,
         metadata={
@@ -246,33 +215,24 @@ class PendingDelegationOperation(PendingOperation):
 
 
 @dataclass
-class CompletedDelegationOperation(CompletedOperation):
-    metadata: DelegationMetadata = field(
-        default_factory=DelegationMetadata,
-        metadata={
-            "marshmallow_field": fields.Nested(
-                class_schema(DelegationMetadata), required=False
-            )
-        },
-    )
-    response: Union[DIP_V_1, DIP_V_2, DRT_V_1, DRT_V_2] = None  # type: ignore
+class PendingDelegationOperation(BaseDelegationOperation, PendingOperation):
+    pass
 
 
 @dataclass
-class FailedDelegationOperation(FailedOperation):
-    metadata: DelegationMetadata = field(
-        default_factory=DelegationMetadata,
-        metadata={
-            "marshmallow_field": fields.Nested(
-                class_schema(DelegationMetadata), required=False
-            )
-        },
-    )
-    error: Optional[OperationStatus] = field(
+class CompletedDelegationOperation(BaseDelegationOperation, CompletedOperation):
+    response: Union[DIP_V_1, DIP_V_2, DRT_V_1, DRT_V_2] = field(
+        default=None, metadata={"required": True}
+    )  # type: ignore
+
+
+@dataclass
+class FailedDelegationOperation(BaseDelegationOperation, FailedOperation):
+    error: OperationStatus = field(
         default=None,
         metadata={
             "marshmallow_field": fields.Nested(
-                class_schema(OperationStatus), required=False
+                class_schema(OperationStatus), required=True
             )
         },
     )
@@ -290,7 +250,7 @@ class DoneOperationMetadata:
 
 
 @dataclass
-class PendingDoneOperation(PendingOperation):
+class BaseDoneOperation:
     metadata: DoneOperationMetadata = field(
         default_factory=DoneOperationMetadata,
         metadata={
@@ -302,33 +262,24 @@ class PendingDoneOperation(PendingOperation):
 
 
 @dataclass
-class CompletedDoneOperation(CompletedOperation):
-    metadata: DoneOperationMetadata = field(
-        default_factory=DoneOperationMetadata,
-        metadata={
-            "marshmallow_field": fields.Nested(
-                class_schema(DoneOperationMetadata), required=False
-            )
-        },
-    )
-    response: Union[ICP_V_1, ICP_V_2, ROT_V_1, ROT_V_2, EXN_V_1, EXN_V_2] = None  # type: ignore
+class PendingDoneOperation(BaseDoneOperation, PendingOperation):
+    pass
 
 
 @dataclass
-class FailedDoneOperation(FailedOperation):
-    metadata: DoneOperationMetadata = field(
-        default_factory=DoneOperationMetadata,
-        metadata={
-            "marshmallow_field": fields.Nested(
-                class_schema(DoneOperationMetadata), required=False
-            )
-        },
-    )
-    error: Optional[OperationStatus] = field(
+class CompletedDoneOperation(BaseDoneOperation, CompletedOperation):
+    response: Union[ICP_V_1, ICP_V_2, ROT_V_1, ROT_V_2, EXN_V_1, EXN_V_2] = field(
+        default=None, metadata={"required": True}
+    )  # type: ignore
+
+
+@dataclass
+class FailedDoneOperation(BaseDoneOperation, FailedOperation):
+    error: OperationStatus = field(
         default=None,
         metadata={
             "marshmallow_field": fields.Nested(
-                class_schema(OperationStatus), required=False
+                class_schema(OperationStatus), required=True
             )
         },
     )
@@ -344,7 +295,7 @@ class GroupOperationMetadata:
 
 
 @dataclass
-class PendingGroupOperation(PendingOperation):
+class BaseGroupOperation:
     metadata: GroupOperationMetadata = field(
         default_factory=GroupOperationMetadata,
         metadata={
@@ -356,33 +307,22 @@ class PendingGroupOperation(PendingOperation):
 
 
 @dataclass
-class CompletedGroupOperation(CompletedOperation):
-    metadata: GroupOperationMetadata = field(
-        default_factory=GroupOperationMetadata,
-        metadata={
-            "marshmallow_field": fields.Nested(
-                class_schema(GroupOperationMetadata), required=False
-            )
-        },
-    )
-    response: AnchoringEvent = None  # type: ignore
+class PendingGroupOperation(BaseGroupOperation, PendingOperation):
+    pass
 
 
 @dataclass
-class FailedGroupOperation(FailedOperation):
-    metadata: GroupOperationMetadata = field(
-        default_factory=GroupOperationMetadata,
-        metadata={
-            "marshmallow_field": fields.Nested(
-                class_schema(GroupOperationMetadata), required=False
-            )
-        },
-    )
-    error: Optional[OperationStatus] = field(
+class CompletedGroupOperation(BaseGroupOperation, CompletedOperation):
+    response: AnchoringEvent = field(default=None, metadata={"required": True})  # type: ignore
+
+
+@dataclass
+class FailedGroupOperation(BaseGroupOperation, FailedOperation):
+    error: OperationStatus = field(
         default=None,
         metadata={
             "marshmallow_field": fields.Nested(
-                class_schema(OperationStatus), required=False
+                class_schema(OperationStatus), required=True
             )
         },
     )
@@ -409,7 +349,7 @@ class DelegatorOperationMetadata:
 
 
 @dataclass
-class PendingDelegatorOperation(PendingOperation):
+class BaseDelegatorOperation:
     metadata: DelegatorOperationMetadata = field(
         default_factory=DelegatorOperationMetadata,
         metadata={
@@ -421,35 +361,24 @@ class PendingDelegatorOperation(PendingOperation):
 
 
 @dataclass
-class CompletedDelegatorOperation(CompletedOperation):
-    metadata: DelegatorOperationMetadata = field(
-        default_factory=DelegatorOperationMetadata,
-        metadata={
-            "marshmallow_field": fields.Nested(
-                class_schema(DelegatorOperationMetadata), required=False
-            )
-        },
-    )
+class PendingDelegatorOperation(BaseDelegatorOperation, PendingOperation):
+    pass
+
+
+@dataclass
+class CompletedDelegatorOperation(BaseDelegatorOperation, CompletedOperation):
     response: Optional[str] = field(
-        default=None, metadata={"marshmallow_field": fields.String(allow_none=False)}
+        default=None, metadata={"marshmallow_field": fields.String(required=True)}
     )
 
 
 @dataclass
-class FailedDelegatorOperation(FailedOperation):
-    metadata: DelegatorOperationMetadata = field(
-        default_factory=DelegatorOperationMetadata,
-        metadata={
-            "marshmallow_field": fields.Nested(
-                class_schema(DelegatorOperationMetadata), required=False
-            )
-        },
-    )
-    error: Optional[OperationStatus] = field(
+class FailedDelegatorOperation(BaseDelegatorOperation, FailedOperation):
+    error: OperationStatus = field(
         default=None,
         metadata={
             "marshmallow_field": fields.Nested(
-                class_schema(OperationStatus), required=False
+                class_schema(OperationStatus), required=True
             )
         },
     )
@@ -467,7 +396,7 @@ class SubmitOperationMetadata:
 
 
 @dataclass
-class PendingSubmitOperation(PendingOperation):
+class BaseSubmitOperation:
     metadata: SubmitOperationMetadata = field(
         default_factory=SubmitOperationMetadata,
         metadata={
@@ -479,40 +408,29 @@ class PendingSubmitOperation(PendingOperation):
 
 
 @dataclass
-class CompletedSubmitOperation(CompletedOperation):
-    metadata: SubmitOperationMetadata = field(
-        default_factory=SubmitOperationMetadata,
-        metadata={
-            "marshmallow_field": fields.Nested(
-                class_schema(SubmitOperationMetadata), required=False
-            )
-        },
-    )
+class PendingSubmitOperation(BaseSubmitOperation, PendingOperation):
+    pass
+
+
+@dataclass
+class CompletedSubmitOperation(BaseSubmitOperation, CompletedOperation):
     response: KeyStateRecord = field(
         default=None,
         metadata={
             "marshmallow_field": fields.Nested(
-                class_schema(KeyStateRecord), required=False
+                class_schema(KeyStateRecord), required=True
             )
         },
     )
 
 
 @dataclass
-class FailedSubmitOperation(FailedOperation):
-    metadata: SubmitOperationMetadata = field(
-        default_factory=SubmitOperationMetadata,
-        metadata={
-            "marshmallow_field": fields.Nested(
-                class_schema(SubmitOperationMetadata), required=False
-            )
-        },
-    )
-    error: Optional[OperationStatus] = field(
+class FailedSubmitOperation(BaseSubmitOperation, FailedOperation):
+    error: OperationStatus = field(
         default=None,
         metadata={
             "marshmallow_field": fields.Nested(
-                class_schema(OperationStatus), required=False
+                class_schema(OperationStatus), required=True
             )
         },
     )
@@ -531,7 +449,7 @@ class EndRoleMetadata:
 
 
 @dataclass
-class PendingEndRoleOperation(PendingOperation):
+class BaseEndRoleOperation:
     metadata: EndRoleMetadata = field(
         default_factory=EndRoleMetadata,
         metadata={
@@ -543,33 +461,22 @@ class PendingEndRoleOperation(PendingOperation):
 
 
 @dataclass
-class CompletedEndRoleOperation(CompletedOperation):
-    metadata: EndRoleMetadata = field(
-        default_factory=EndRoleMetadata,
-        metadata={
-            "marshmallow_field": fields.Nested(
-                class_schema(EndRoleMetadata), required=False
-            )
-        },
-    )
-    response: Union[RPY_V_1, RPY_V_2]  # type: ignore
+class PendingEndRoleOperation(BaseEndRoleOperation, PendingOperation):
+    pass
 
 
 @dataclass
-class FailedEndRoleOperation(FailedOperation):
-    metadata: EndRoleMetadata = field(
-        default_factory=EndRoleMetadata,
-        metadata={
-            "marshmallow_field": fields.Nested(
-                class_schema(EndRoleMetadata), required=False
-            )
-        },
-    )
-    error: Optional[OperationStatus] = field(
+class CompletedEndRoleOperation(BaseEndRoleOperation, CompletedOperation):
+    response: Union[RPY_V_1, RPY_V_2] = field(default=None, metadata={"required": True})  # type: ignore
+
+
+@dataclass
+class FailedEndRoleOperation(BaseEndRoleOperation, FailedOperation):
+    error: OperationStatus = field(
         default=None,
         metadata={
             "marshmallow_field": fields.Nested(
-                class_schema(OperationStatus), required=False
+                class_schema(OperationStatus), required=True
             )
         },
     )
@@ -588,7 +495,7 @@ class LocSchemeMetadata:
 
 
 @dataclass
-class PendingLocSchemeOperation(PendingOperation):
+class BaseLocSchemeOperation:
     metadata: LocSchemeMetadata = field(
         default_factory=LocSchemeMetadata,
         metadata={
@@ -600,40 +507,29 @@ class PendingLocSchemeOperation(PendingOperation):
 
 
 @dataclass
-class CompletedLocSchemeOperation(CompletedOperation):
-    metadata: LocSchemeMetadata = field(
-        default_factory=LocSchemeMetadata,
-        metadata={
-            "marshmallow_field": fields.Nested(
-                class_schema(LocSchemeMetadata), required=False
-            )
-        },
-    )
+class PendingLocSchemeOperation(BaseLocSchemeOperation, PendingOperation):
+    pass
+
+
+@dataclass
+class CompletedLocSchemeOperation(BaseLocSchemeOperation, CompletedOperation):
     response: LocSchemeMetadata = field(
         default_factory=LocSchemeMetadata,
         metadata={
             "marshmallow_field": fields.Nested(
-                class_schema(LocSchemeMetadata), required=False
+                class_schema(LocSchemeMetadata), required=True
             )
         },
     )
 
 
 @dataclass
-class FailedLocSchemeOperation(FailedOperation):
-    metadata: LocSchemeMetadata = field(
-        default_factory=LocSchemeMetadata,
-        metadata={
-            "marshmallow_field": fields.Nested(
-                class_schema(LocSchemeMetadata), required=False
-            )
-        },
-    )
-    error: Optional[OperationStatus] = field(
+class FailedLocSchemeOperation(BaseLocSchemeOperation, FailedOperation):
+    error: OperationStatus = field(
         default=None,
         metadata={
             "marshmallow_field": fields.Nested(
-                class_schema(OperationStatus), required=False
+                class_schema(OperationStatus), required=True
             )
         },
     )
@@ -655,7 +551,7 @@ class ChallengeOperationResponse:
 
 
 @dataclass
-class PendingChallengeOperation(PendingOperation):
+class BaseChallengeOperation:
     metadata: ChallengeOperationMetadata = field(
         default_factory=ChallengeOperationMetadata,
         metadata={
@@ -667,40 +563,29 @@ class PendingChallengeOperation(PendingOperation):
 
 
 @dataclass
-class CompletedChallengeOperation(CompletedOperation):
-    metadata: ChallengeOperationMetadata = field(
-        default_factory=ChallengeOperationMetadata,
-        metadata={
-            "marshmallow_field": fields.Nested(
-                class_schema(ChallengeOperationMetadata), required=False
-            )
-        },
-    )
+class PendingChallengeOperation(BaseChallengeOperation, PendingOperation):
+    pass
+
+
+@dataclass
+class CompletedChallengeOperation(BaseChallengeOperation, CompletedOperation):
     response: ChallengeOperationResponse = field(
         default_factory=ChallengeOperationResponse,
         metadata={
             "marshmallow_field": fields.Nested(
-                class_schema(ChallengeOperationResponse), required=False
+                class_schema(ChallengeOperationResponse), required=True
             )
         },
     )
 
 
 @dataclass
-class FailedChallengeOperation(FailedOperation):
-    metadata: ChallengeOperationMetadata = field(
-        default_factory=ChallengeOperationMetadata,
-        metadata={
-            "marshmallow_field": fields.Nested(
-                class_schema(ChallengeOperationMetadata), required=False
-            )
-        },
-    )
-    error: Optional[OperationStatus] = field(
+class FailedChallengeOperation(BaseChallengeOperation, FailedOperation):
+    error: OperationStatus = field(
         default=None,
         metadata={
             "marshmallow_field": fields.Nested(
-                class_schema(OperationStatus), required=False
+                class_schema(OperationStatus), required=True
             )
         },
     )
@@ -736,7 +621,7 @@ class RegistryOperationResponse:
 
 
 @dataclass
-class PendingRegistryOperation(PendingOperation):
+class BaseRegistryOperation:
     metadata: RegistryOperationMetadata = field(
         default_factory=RegistryOperationMetadata,
         metadata={
@@ -748,40 +633,29 @@ class PendingRegistryOperation(PendingOperation):
 
 
 @dataclass
-class CompletedRegistryOperation(CompletedOperation):
-    metadata: RegistryOperationMetadata = field(
-        default_factory=RegistryOperationMetadata,
-        metadata={
-            "marshmallow_field": fields.Nested(
-                class_schema(RegistryOperationMetadata), required=False
-            )
-        },
-    )
+class PendingRegistryOperation(BaseRegistryOperation, PendingOperation):
+    pass
+
+
+@dataclass
+class CompletedRegistryOperation(BaseRegistryOperation, CompletedOperation):
     response: RegistryOperationResponse = field(
         default_factory=RegistryOperationResponse,
         metadata={
             "marshmallow_field": fields.Nested(
-                class_schema(RegistryOperationResponse), required=False
+                class_schema(RegistryOperationResponse), required=True
             )
         },
     )
 
 
 @dataclass
-class FailedRegistryOperation(FailedOperation):
-    metadata: RegistryOperationMetadata = field(
-        default_factory=RegistryOperationMetadata,
-        metadata={
-            "marshmallow_field": fields.Nested(
-                class_schema(RegistryOperationMetadata), required=False
-            )
-        },
-    )
-    error: Optional[OperationStatus] = field(
+class FailedRegistryOperation(BaseRegistryOperation, FailedOperation):
+    error: OperationStatus = field(
         default=None,
         metadata={
             "marshmallow_field": fields.Nested(
-                class_schema(OperationStatus), required=False
+                class_schema(OperationStatus), required=True
             )
         },
     )
@@ -804,7 +678,7 @@ class CredentialOperationResponse:
 
 
 @dataclass
-class PendingCredentialOperation(PendingOperation):
+class BaseCredentialOperation:
     metadata: CredentialOperationMetadata = field(
         default_factory=CredentialOperationMetadata,
         metadata={
@@ -816,40 +690,29 @@ class PendingCredentialOperation(PendingOperation):
 
 
 @dataclass
-class CompletedCredentialOperation(CompletedOperation):
-    metadata: CredentialOperationMetadata = field(
-        default_factory=CredentialOperationMetadata,
-        metadata={
-            "marshmallow_field": fields.Nested(
-                class_schema(CredentialOperationMetadata), required=False
-            )
-        },
-    )
+class PendingCredentialOperation(BaseCredentialOperation, PendingOperation):
+    pass
+
+
+@dataclass
+class CompletedCredentialOperation(BaseCredentialOperation, CompletedOperation):
     response: CredentialOperationResponse = field(
         default_factory=CredentialOperationResponse,
         metadata={
             "marshmallow_field": fields.Nested(
-                class_schema(CredentialOperationResponse), required=False
+                class_schema(CredentialOperationResponse), required=True
             )
         },
     )
 
 
 @dataclass
-class FailedCredentialOperation(FailedOperation):
-    metadata: CredentialOperationMetadata = field(
-        default_factory=CredentialOperationMetadata,
-        metadata={
-            "marshmallow_field": fields.Nested(
-                class_schema(CredentialOperationMetadata), required=False
-            )
-        },
-    )
-    error: Optional[OperationStatus] = field(
+class FailedCredentialOperation(BaseCredentialOperation, FailedOperation):
+    error: OperationStatus = field(
         default=None,
         metadata={
             "marshmallow_field": fields.Nested(
-                class_schema(OperationStatus), required=False
+                class_schema(OperationStatus), required=True
             )
         },
     )
@@ -866,7 +729,7 @@ class ExchangeOperationMetadata:
 
 
 @dataclass
-class PendingExchangeOperation(PendingOperation):
+class BaseExchangeOperation:
     metadata: ExchangeOperationMetadata = field(
         default_factory=ExchangeOperationMetadata,
         metadata={
@@ -878,40 +741,29 @@ class PendingExchangeOperation(PendingOperation):
 
 
 @dataclass
-class CompletedExchangeOperation(CompletedOperation):
-    metadata: ExchangeOperationMetadata = field(
-        default_factory=ExchangeOperationMetadata,
-        metadata={
-            "marshmallow_field": fields.Nested(
-                class_schema(ExchangeOperationMetadata), required=False
-            )
-        },
-    )
+class PendingExchangeOperation(BaseExchangeOperation, PendingOperation):
+    pass
+
+
+@dataclass
+class CompletedExchangeOperation(BaseExchangeOperation, CompletedOperation):
     response: ExchangeOperationMetadata = field(
         default_factory=ExchangeOperationMetadata,
         metadata={
             "marshmallow_field": fields.Nested(
-                class_schema(ExchangeOperationMetadata), required=False
+                class_schema(ExchangeOperationMetadata), required=True
             )
         },
     )
 
 
 @dataclass
-class FailedExchangeOperation(FailedOperation):
-    metadata: ExchangeOperationMetadata = field(
-        default_factory=ExchangeOperationMetadata,
-        metadata={
-            "marshmallow_field": fields.Nested(
-                class_schema(ExchangeOperationMetadata), required=False
-            )
-        },
-    )
-    error: Optional[OperationStatus] = field(
+class FailedExchangeOperation(BaseExchangeOperation, FailedOperation):
+    error: OperationStatus = field(
         default=None,
         metadata={
             "marshmallow_field": fields.Nested(
-                class_schema(OperationStatus), required=False
+                class_schema(OperationStatus), required=True
             )
         },
     )
