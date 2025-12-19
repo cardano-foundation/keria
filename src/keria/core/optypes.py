@@ -7,7 +7,7 @@ keria.core.operation module
 
 from dataclasses import dataclass, field
 from marshmallow import fields
-from typing import Optional, Union
+from typing import Union
 from marshmallow_dataclass import class_schema
 from keria.app import aiding, credentialing
 from keria.app.credentialing import (
@@ -62,7 +62,7 @@ class PendingOOBIOperation(BaseOOBIOperation, PendingOperation):
     pass
 
 
-@dataclass
+@dataclass(kw_only=True)
 class CompletedOOBIOperation(BaseOOBIOperation, CompletedOperation):
     response: aiding.KeyStateRecord = field(
         default_factory=aiding.KeyStateRecord,
@@ -74,7 +74,7 @@ class CompletedOOBIOperation(BaseOOBIOperation, CompletedOperation):
     )
 
 
-@dataclass
+@dataclass(kw_only=True)
 class FailedOOBIOperation(BaseOOBIOperation, FailedOperation):
     error: OperationStatus = field(
         default=None,
@@ -120,7 +120,7 @@ class PendingQueryOperation(BaseQueryOperation, PendingOperation):
     pass
 
 
-@dataclass
+@dataclass(kw_only=True)
 class CompletedQueryOperation(BaseQueryOperation, CompletedOperation):
     response: aiding.KeyStateRecord = field(
         default_factory=aiding.KeyStateRecord,
@@ -132,7 +132,7 @@ class CompletedQueryOperation(BaseQueryOperation, CompletedOperation):
     )
 
 
-@dataclass
+@dataclass(kw_only=True)
 class FailedQueryOperation(BaseQueryOperation, FailedOperation):
     error: OperationStatus = field(
         default=None,
@@ -172,14 +172,14 @@ class PendingWitnessOperation(BaseWitnessOperation, PendingOperation):
     pass
 
 
-@dataclass
+@dataclass(kw_only=True)
 class CompletedWitnessOperation(BaseWitnessOperation, CompletedOperation):
     response: Union[ICP_V_1, ICP_V_2, ROT_V_1, ROT_V_2, IXN_V_1, IXN_V_2] = field(
         default=None, metadata={"required": True}
     )  # type: ignore
 
 
-@dataclass
+@dataclass(kw_only=True)
 class FailedWitnessOperation(BaseWitnessOperation, FailedOperation):
     error: OperationStatus = field(
         default=None,
@@ -219,14 +219,14 @@ class PendingDelegationOperation(BaseDelegationOperation, PendingOperation):
     pass
 
 
-@dataclass
+@dataclass(kw_only=True)
 class CompletedDelegationOperation(BaseDelegationOperation, CompletedOperation):
     response: Union[DIP_V_1, DIP_V_2, DRT_V_1, DRT_V_2] = field(
         default=None, metadata={"required": True}
     )  # type: ignore
 
 
-@dataclass
+@dataclass(kw_only=True)
 class FailedDelegationOperation(BaseDelegationOperation, FailedOperation):
     error: OperationStatus = field(
         default=None,
@@ -266,14 +266,14 @@ class PendingDoneOperation(BaseDoneOperation, PendingOperation):
     pass
 
 
-@dataclass
+@dataclass(kw_only=True)
 class CompletedDoneOperation(BaseDoneOperation, CompletedOperation):
     response: Union[ICP_V_1, ICP_V_2, ROT_V_1, ROT_V_2, EXN_V_1, EXN_V_2] = field(
         default=None, metadata={"required": True}
     )  # type: ignore
 
 
-@dataclass
+@dataclass(kw_only=True)
 class FailedDoneOperation(BaseDoneOperation, FailedOperation):
     error: OperationStatus = field(
         default=None,
@@ -311,12 +311,12 @@ class PendingGroupOperation(BaseGroupOperation, PendingOperation):
     pass
 
 
-@dataclass
+@dataclass(kw_only=True)
 class CompletedGroupOperation(BaseGroupOperation, CompletedOperation):
     response: AnchoringEvent = field(default=None, metadata={"required": True})  # type: ignore
 
 
-@dataclass
+@dataclass(kw_only=True)
 class FailedGroupOperation(BaseGroupOperation, FailedOperation):
     error: OperationStatus = field(
         default=None,
@@ -365,14 +365,12 @@ class PendingDelegatorOperation(BaseDelegatorOperation, PendingOperation):
     pass
 
 
-@dataclass
+@dataclass(kw_only=True)
 class CompletedDelegatorOperation(BaseDelegatorOperation, CompletedOperation):
-    response: Optional[str] = field(
-        default=None, metadata={"marshmallow_field": fields.String(required=True)}
-    )
+    response: str
 
 
-@dataclass
+@dataclass(kw_only=True)
 class FailedDelegatorOperation(BaseDelegatorOperation, FailedOperation):
     error: OperationStatus = field(
         default=None,
@@ -412,7 +410,7 @@ class PendingSubmitOperation(BaseSubmitOperation, PendingOperation):
     pass
 
 
-@dataclass
+@dataclass(kw_only=True)
 class CompletedSubmitOperation(BaseSubmitOperation, CompletedOperation):
     response: KeyStateRecord = field(
         default=None,
@@ -424,7 +422,7 @@ class CompletedSubmitOperation(BaseSubmitOperation, CompletedOperation):
     )
 
 
-@dataclass
+@dataclass(kw_only=True)
 class FailedSubmitOperation(BaseSubmitOperation, FailedOperation):
     error: OperationStatus = field(
         default=None,
@@ -465,12 +463,12 @@ class PendingEndRoleOperation(BaseEndRoleOperation, PendingOperation):
     pass
 
 
-@dataclass
+@dataclass(kw_only=True)
 class CompletedEndRoleOperation(BaseEndRoleOperation, CompletedOperation):
     response: Union[RPY_V_1, RPY_V_2] = field(default=None, metadata={"required": True})  # type: ignore
 
 
-@dataclass
+@dataclass(kw_only=True)
 class FailedEndRoleOperation(BaseEndRoleOperation, FailedOperation):
     error: OperationStatus = field(
         default=None,
@@ -511,7 +509,7 @@ class PendingLocSchemeOperation(BaseLocSchemeOperation, PendingOperation):
     pass
 
 
-@dataclass
+@dataclass(kw_only=True)
 class CompletedLocSchemeOperation(BaseLocSchemeOperation, CompletedOperation):
     response: LocSchemeMetadata = field(
         default_factory=LocSchemeMetadata,
@@ -523,7 +521,7 @@ class CompletedLocSchemeOperation(BaseLocSchemeOperation, CompletedOperation):
     )
 
 
-@dataclass
+@dataclass(kw_only=True)
 class FailedLocSchemeOperation(BaseLocSchemeOperation, FailedOperation):
     error: OperationStatus = field(
         default=None,
@@ -567,7 +565,7 @@ class PendingChallengeOperation(BaseChallengeOperation, PendingOperation):
     pass
 
 
-@dataclass
+@dataclass(kw_only=True)
 class CompletedChallengeOperation(BaseChallengeOperation, CompletedOperation):
     response: ChallengeOperationResponse = field(
         default_factory=ChallengeOperationResponse,
@@ -579,7 +577,7 @@ class CompletedChallengeOperation(BaseChallengeOperation, CompletedOperation):
     )
 
 
-@dataclass
+@dataclass(kw_only=True)
 class FailedChallengeOperation(BaseChallengeOperation, FailedOperation):
     error: OperationStatus = field(
         default=None,
@@ -637,7 +635,7 @@ class PendingRegistryOperation(BaseRegistryOperation, PendingOperation):
     pass
 
 
-@dataclass
+@dataclass(kw_only=True)
 class CompletedRegistryOperation(BaseRegistryOperation, CompletedOperation):
     response: RegistryOperationResponse = field(
         default_factory=RegistryOperationResponse,
@@ -649,7 +647,7 @@ class CompletedRegistryOperation(BaseRegistryOperation, CompletedOperation):
     )
 
 
-@dataclass
+@dataclass(kw_only=True)
 class FailedRegistryOperation(BaseRegistryOperation, FailedOperation):
     error: OperationStatus = field(
         default=None,
@@ -694,7 +692,7 @@ class PendingCredentialOperation(BaseCredentialOperation, PendingOperation):
     pass
 
 
-@dataclass
+@dataclass(kw_only=True)
 class CompletedCredentialOperation(BaseCredentialOperation, CompletedOperation):
     response: CredentialOperationResponse = field(
         default_factory=CredentialOperationResponse,
@@ -706,7 +704,7 @@ class CompletedCredentialOperation(BaseCredentialOperation, CompletedOperation):
     )
 
 
-@dataclass
+@dataclass(kw_only=True)
 class FailedCredentialOperation(BaseCredentialOperation, FailedOperation):
     error: OperationStatus = field(
         default=None,
@@ -745,7 +743,7 @@ class PendingExchangeOperation(BaseExchangeOperation, PendingOperation):
     pass
 
 
-@dataclass
+@dataclass(kw_only=True)
 class CompletedExchangeOperation(BaseExchangeOperation, CompletedOperation):
     response: ExchangeOperationMetadata = field(
         default_factory=ExchangeOperationMetadata,
@@ -757,7 +755,7 @@ class CompletedExchangeOperation(BaseExchangeOperation, CompletedOperation):
     )
 
 
-@dataclass
+@dataclass(kw_only=True)
 class FailedExchangeOperation(BaseExchangeOperation, FailedOperation):
     error: OperationStatus = field(
         default=None,
