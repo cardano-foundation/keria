@@ -19,7 +19,6 @@ from keri.app.oobiing import Result
 from keri.core import eventing, coring, serdering
 from keri.db import dbing, koming
 from keri.help import helping
-from marshmallow_dataclass import class_schema
 
 from keria.app import delegating
 
@@ -61,8 +60,7 @@ class OperationStatus:
 @dataclass
 class BaseOperation:
     name: str
-    metadata: Optional[dict] = None
-    done: bool = False
+    metadata: Optional[dict]
 
 
 @dataclass_json
@@ -74,22 +72,15 @@ class PendingOperation(BaseOperation):
 @dataclass_json
 @dataclass
 class CompletedOperation(BaseOperation):
+    response: dict
     done: Literal[True] = True
-    response: Optional[dict] = None
 
 
 @dataclass_json
 @dataclass
 class FailedOperation(BaseOperation):
+    error: OperationStatus
     done: Literal[True] = True
-    error: Optional[OperationStatus] = field(
-        default=None,
-        metadata={
-            "marshmallow_field": fields.Nested(
-                class_schema(OperationStatus), required=False
-            )
-        },
-    )
 
 
 Operation = Union[PendingOperation, CompletedOperation, FailedOperation]
