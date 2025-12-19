@@ -18,6 +18,7 @@ from keri.kering import SerializeError
 
 from keria.core import httping, longrunning
 from keria.app import aiding, credentialing, agenting
+from keria.peer import exchanging
 
 logger = ogler.getLogger()
 
@@ -187,7 +188,7 @@ class MultisigJoinCollectionEnd:
                     application/json:
                         schema:
                             type: object
-                            $ref: '#/components/schemas/Operation'
+                            $ref: '#/components/schemas/GroupOperation'
             400:
                 description: Bad request. Bad request. This could be due to missing or invalid parameters.
             404:
@@ -313,7 +314,7 @@ class MultisigRpyEmbeds:
 
 @dataclass
 class MultisigExnEmbeds:
-    exn: Union["agenting.EXN_V_1", "agenting.EXN_V_2"]  # type: ignore
+    exn: Union["exchanging.EXN_V_1", "exchanging.EXN_V_2"]  # type: ignore
 
 
 @dataclass
@@ -376,7 +377,7 @@ ExnEmbeds = Union[
 
 @dataclass
 class ExnMultisig:
-    exn: Union["agenting.EXN_V_1", "agenting.EXN_V_2"]  # type: ignore
+    exn: Union["exchanging.EXN_V_1", "exchanging.EXN_V_2"]  # type: ignore
     paths: dict
     groupName: Optional[str] = None
     memberName: Optional[str] = None

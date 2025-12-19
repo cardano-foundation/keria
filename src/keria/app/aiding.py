@@ -21,6 +21,7 @@ from mnemonic import mnemonic
 from keri.db import basing
 from marshmallow import fields
 from marshmallow_dataclass import class_schema
+
 from ..core import longrunning, httping
 from ..utils.openapi import namedtupleToEnum, dataclassFromFielddom
 from keri.core.serdering import Protocols, Vrsn_1_0, Vrsn_2_0, SerderKERI
@@ -632,7 +633,11 @@ class IdentifierCollectionEnd:
                 content:
                   application/json:
                     schema:
-                        $ref: '#/components/schemas/Operation'
+                      oneOf:
+                        - $ref: '#/components/schemas/GroupOperation'
+                        - $ref: '#/components/schemas/WitnessOperation'
+                        - $ref: '#/components/schemas/DelegationOperation'
+                        - $ref: '#/components/schemas/DoneOperation'
             400:
                 description: Bad request. This could be due to missing or invalid parameters.
         """
@@ -1005,7 +1010,12 @@ class IdentifierResourceEnd:
               content:
                 application/json:
                   schema:
-                    $ref: '#/components/schemas/Operation'
+                      oneOf:
+                        - $ref: '#/components/schemas/GroupOperation'
+                        - $ref: '#/components/schemas/WitnessOperation'
+                        - $ref: '#/components/schemas/DelegationOperation'
+                        - $ref: '#/components/schemas/DoneOperation'
+                        - $ref: '#/components/schemas/SubmitOperation'
             400:
               description: Bad request. This could be due to missing or invalid parameters.
         """
@@ -1585,7 +1595,7 @@ class EndRoleCollectionEnd:
                 content:
                     application/json:
                         schema:
-                            $ref: '#/components/schemas/Operation'
+                            $ref: '#/components/schemas/EndRoleOperation'
             400:
                 description: Bad request. This could be due to missing or invalid parameters.
             404:
@@ -1694,7 +1704,7 @@ class LocSchemeCollectionEnd:
                 content:
                     application/json:
                         schema:
-                            $ref: '#/components/schemas/Operation'
+                            $ref: '#/components/schemas/LocSchemeOperation'
             400:
                 description: Bad request. This could be due to missing or invalid parameters.
             404:
@@ -1990,7 +2000,7 @@ class ChallengeVerifyResourceEnd:
               content:
                 application/json:
                   schema:
-                    $ref: '#/components/schemas/Operation'
+                    $ref: '#/components/schemas/ChallengeOperation'
         """
         agent = req.context.agent
 
