@@ -84,13 +84,14 @@ setup(
     python_requires='>=3.12.2',
     install_requires=[
         'hio==0.6.14',
-        'keri @ git+https://git@github.com/weboftrust/keripy.git@2a94929cccf333cfa8466bfcdca3307e59d92c7c',
+        'keri @ git+https://git@github.com/cardano-foundation/keripy.git@6599b40e58d90065e2ff70b4bf0a3becfc5e9d06',
         'mnemonic==0.21',
         'multicommand==1.0.0',
         'falcon==4.0.2',
         'http_sfv==0.9.9',
         'dataclasses_json==0.6.7',
         'apispec==6.8.1',
+        'requests',
     ],
     extras_require={
         'test': ['pytest', 'coverage'],

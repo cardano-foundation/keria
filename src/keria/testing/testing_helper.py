@@ -334,10 +334,10 @@ class Helpers:
             wits = []
 
         salter = core.Salter(raw=bran)
-        creator = keeping.SaltyCreator(salt=salter.qb64, stem=stem, tier=coring.Tiers.low)
+        creator = keeping.SaltyCreator(salt=salter.qb64, stem=stem, tier=core.signing.Tiers.low)
 
-        signers = creator.create(pidx=pidx, ridx=0, tier=coring.Tiers.low, temp=False, count=count)
-        nsigners = creator.create(pidx=pidx, ridx=1, tier=coring.Tiers.low, temp=False, count=count)
+        signers = creator.create(pidx=pidx, ridx=0, tier=core.signing.Tiers.low, temp=False, count=count)
+        nsigners = creator.create(pidx=pidx, ridx=1, tier=core.signing.Tiers.low, temp=False, count=count)
 
         keys = [signer.verfer.qb64 for signer in signers]
         ndigs = [coring.Diger(ser=nsigner.verfer.qb64b) for nsigner in nsigners]
@@ -417,21 +417,21 @@ class Helpers:
     def interact(pre, bran, pidx, ridx, sn, dig, data):
         serder = eventing.interact(pre=pre, dig=dig, sn=sn, data=data)
         salter = core.Salter(raw=bran)
-        creator = keeping.SaltyCreator(salt=salter.qb64, stem="signify:aid", tier=coring.Tiers.low)
+        creator = keeping.SaltyCreator(salt=salter.qb64, stem="signify:aid", tier=core.signing.Tiers.low)
 
-        signers = creator.create(pidx=pidx, ridx=ridx, tier=coring.Tiers.low, temp=False, count=1)
+        signers = creator.create(pidx=pidx, ridx=ridx, tier=core.signing.Tiers.low, temp=False, count=1)
         sigers = [signer.sign(ser=serder.raw, index=0).qb64 for signer in signers]
         return serder, sigers
 
     @staticmethod
     def createRotate(aid, salt, signers, pidx, ridx, kidx, wits, toad):
         salter = core.Salter(raw=salt)
-        creator = keeping.SaltyCreator(salt=salter.qb64, stem="signify:aid", tier=coring.Tiers.low)
+        creator = keeping.SaltyCreator(salt=salter.qb64, stem="signify:aid", tier=core.signing.Tiers.low)
         encrypter = core.Encrypter(verkey=signers[0].verfer.qb64)
         sxlt = encrypter.encrypt(ser=salter.qb64).qb64
 
-        rsigners = creator.create(pidx=pidx, ridx=ridx, tier=coring.Tiers.low, temp=False, count=1)
-        rnsigners = creator.create(pidx=pidx, ridx=ridx+1, tier=coring.Tiers.low, temp=False, count=1)
+        rsigners = creator.create(pidx=pidx, ridx=ridx, tier=core.signing.Tiers.low, temp=False, count=1)
+        rnsigners = creator.create(pidx=pidx, ridx=ridx+1, tier=core.signing.Tiers.low, temp=False, count=1)
 
         rkeys = [signer.verfer.qb64 for signer in rsigners]
         rndigs = [coring.Diger(ser=nsigner.verfer.qb64b) for nsigner in rnsigners]
@@ -455,9 +455,9 @@ class Helpers:
     @staticmethod
     def sign(bran, pidx, ridx, ser):
         salter = core.Salter(raw=bran)
-        creator = keeping.SaltyCreator(salt=salter.qb64, stem="signify:aid", tier=coring.Tiers.low)
+        creator = keeping.SaltyCreator(salt=salter.qb64, stem="signify:aid", tier=core.signing.Tiers.low)
 
-        signers = creator.create(pidx=pidx, ridx=ridx, tier=coring.Tiers.low, temp=False, count=1)
+        signers = creator.create(pidx=pidx, ridx=ridx, tier=core.signing.Tiers.low, temp=False, count=1)
         sigers = [signer.sign(ser=ser, index=0).qb64 for signer in signers]
         return sigers
 

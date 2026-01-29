@@ -9,7 +9,8 @@ from dataclasses import dataclass, asdict, field
 from keri.app.keeping import PreSit, Algos, PubLot, PubSet
 from keri import core
 from keri.core import coring
-from keri.core.coring import Tiers, MtrDex
+from keri.core.coring import MtrDex
+from keri.core.signing import Tiers
 from keri.db import dbing, subing, koming
 from keri.help import helping
 

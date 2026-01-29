@@ -412,10 +412,10 @@ def test_identifier_collection_end(helpers):
 
         # Rotate aid1
         salter = core.Salter(raw=salt)
-        creator = keeping.SaltyCreator(salt=salter.qb64, stem="signify:aid", tier=coring.Tiers.low)
+        creator = keeping.SaltyCreator(salt=salter.qb64, stem="signify:aid", tier=core.signing.Tiers.low)
 
-        signers = creator.create(pidx=0, ridx=1, tier=coring.Tiers.low, temp=False, count=1)
-        nsigners = creator.create(pidx=0, ridx=2, tier=coring.Tiers.low, temp=False, count=1)
+        signers = creator.create(pidx=0, ridx=1, tier=core.signing.Tiers.low, temp=False, count=1)
+        nsigners = creator.create(pidx=0, ridx=2, tier=core.signing.Tiers.low, temp=False, count=1)
 
         keys = [signer.verfer.qb64 for signer in signers]
         ndigs = [coring.Diger(ser=nsigner.verfer.qb64b) for nsigner in nsigners]
@@ -524,10 +524,10 @@ def test_identifier_collection_end(helpers):
 
         # rotate aid3
         salter = core.Salter(raw=salt)
-        creator = keeping.SaltyCreator(salt=salter.qb64, stem="signify:aid", tier=coring.Tiers.low)
+        creator = keeping.SaltyCreator(salt=salter.qb64, stem="signify:aid", tier=core.signing.Tiers.low)
 
-        signers = creator.create(pidx=3, ridx=1, tier=coring.Tiers.low, temp=False, count=1)
-        nsigners = creator.create(pidx=3, ridx=2, tier=coring.Tiers.low, temp=False, count=1)
+        signers = creator.create(pidx=3, ridx=1, tier=core.signing.Tiers.low, temp=False, count=1)
+        nsigners = creator.create(pidx=3, ridx=2, tier=core.signing.Tiers.low, temp=False, count=1)
 
         keys = [signer.verfer.qb64 for signer in signers]
         ndigs = [coring.Diger(ser=nsigner.verfer.qb64b) for nsigner in nsigners]

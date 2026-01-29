@@ -26,7 +26,7 @@ from keri.app.notifying import Notifier
 from keri.app.storing import Mailboxer
 
 from keri.app import configing, keeping, habbing, storing, signaling, oobiing, agenting, \
-    forwarding, querying, connecting, grouping
+    forwarding, querying, organizing, grouping
 from keri.app.grouping import Counselor
 from keri.app.keeping import Algos
 from keri.core import coring, parsing, eventing, routing, serdering
@@ -461,7 +461,7 @@ class Agent(doing.DoDoer):
 
         self.swain = delegating.Anchorer(hby=hby, proxy=agentHab)
         self.counselor = Counselor(hby=hby, swain=self.swain, proxy=agentHab)
-        self.org = connecting.Organizer(hby=hby)
+        self.org = organizing.Organizer(hby=hby)
 
         self.cues = decking.Deck()
         self.rvy = routing.Revery(db=hby.db, cues=self.cues)
