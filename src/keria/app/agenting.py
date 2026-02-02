@@ -462,6 +462,7 @@ class Agent(doing.DoDoer):
         self.swain = delegating.Anchorer(hby=hby, proxy=agentHab)
         self.counselor = Counselor(hby=hby, swain=self.swain, proxy=agentHab)
         self.org = organizing.Organizer(hby=hby)
+        self.localOrg = organizing.IdentifierOrganizer(hby=hby)
 
         self.cues = decking.Deck()
         self.rvy = routing.Revery(db=hby.db, cues=self.cues)
