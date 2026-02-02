@@ -713,6 +713,14 @@ def test_multisig(seeder, helpers):
         res = vclient1.simulate_post(path=f"/identifiers/verifier/endroles", json=body)
         assert res.status_code == 202
 
+        # Direct kever assignment bypasses KEL validation, just for test purposes
+        allAgents = [agent0, agent1, hagent0, hagent1, vagent0, vagent1]
+        for sourceAgent in allAgents:
+            sourceKever = sourceAgent.hby.kevers[sourceAgent.agentHab.pre]
+            for targetAgent in allAgents:
+                if targetAgent != sourceAgent:
+                    targetAgent.hby.kevers[sourceAgent.agentHab.pre] = sourceKever
+
         # Introduce the multisig AIDs to each other
         for name, agent in [("issuer", agent0), ("issuerParticipant0", agent0), ("issuerParticipant1", agent1)]:
             issuerHab = agent.hby.habByName(name)
