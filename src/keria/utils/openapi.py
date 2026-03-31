@@ -1,3 +1,4 @@
+from platform import node
 from typing import Any, Dict, List, Union, Optional
 from enum import Enum
 from dataclasses import field, make_dataclass
@@ -434,3 +435,42 @@ def namedtupleToEnum(nt_instance, enum_name="AutoEnum"):
 
     # Dynamically create a subclass of str & Enum
     return Enum(enum_name, members, type=str)
+
+
+def normalizeBoolLiteralSchema(node):
+    """Convert marshmallow bool Literal output to OpenAPI const semantics."""
+    if isinstance(node, dict):
+        enum_values = node.get("enum")
+        if (
+            isinstance(enum_values, list)
+            and len(enum_values) == 1
+            and isinstance(enum_values[0], bool)
+            and node.get("default") is enum_values[0]
+        ):
+            node.pop("enum", None)
+            node.pop("default", None)
+            node["type"] = "boolean"
+            node["const"] = enum_values[0]
+
+        for value in node.values():
+            normalizeBoolLiteralSchema(value)
+
+        properties = node.get("properties")
+        required = node.get("required")
+        if isinstance(properties, dict):
+            required_fields = required if isinstance(required, list) else []
+            for name, schema in properties.items():
+                if (
+                    isinstance(schema, dict)
+                    and schema.get("type") == "boolean"
+                    and isinstance(schema.get("const"), bool)
+                    and name not in required_fields
+                ):
+                    required_fields.append(name)
+
+            if required_fields:
+                node["required"] = required_fields
+
+    elif isinstance(node, list):
+        for value in node:
+            normalizeBoolLiteralSchema(value)

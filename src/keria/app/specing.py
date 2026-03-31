@@ -11,7 +11,7 @@ from ..core import optypes
 from ..utils.openapi import applyAltConstraintsToOpenApiSchema
 from . import credentialing
 from keri.core import coring
-from ..utils.openapi import enumSchemaFromNamedtuple
+from ..utils.openapi import enumSchemaFromNamedtuple, normalizeBoolLiteralSchema
 
 """
 KERIA
@@ -1021,6 +1021,7 @@ class AgentSpecResource:
             ]
         }
 
+        normalizeBoolLiteralSchema(self.spec.components.schemas)
         self.addRoutes(app)
 
     def addRoutes(self, app):
