@@ -667,7 +667,9 @@ RegistryOperation = Union[
 @dataclass
 class CredentialOperationMetadata:
     ced: Union[ACDC_V_1, ACDC_V_2]  # type: ignore
-    depends: Union[ROT_V_1, ROT_V_2, DRT_V_1, DRT_V_2, IXN_V_1, IXN_V_2] = None  # type: ignore
+    depends: Union[
+        "GroupOperation", "WitnessOperation", "DoneOperation", "DelegationOperation"
+    ] = None  # type: ignore
 
 
 @dataclass
