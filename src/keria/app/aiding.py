@@ -67,6 +67,12 @@ def loadEnds(app, agency, authn):
     contactImgEnd = ContactImageResourceEnd()
     app.add_route("/contacts/{prefix}/img", contactImgEnd)
 
+
+    metadataEnd = MetadataResourceEnd()
+    app.add_route("/identifiers/{name}/metadata", metadataEnd)
+    metadataImgEnd = MetadataImageResourceEnd()
+    app.add_route("/identifiers/{name}/metadata/img", metadataImgEnd)
+
     groupEnd = GroupMemberCollectionEnd()
     app.add_route("/identifiers/{name}/members", groupEnd)
 
@@ -686,6 +692,7 @@ class IdentifierResourceEnd:
             )
 
         data = info(hab, agent.mgr, full=True)
+        data["metadata"] = agent.localOrg.get(hab.pre)
         rep.status = falcon.HTTP_200
         rep.content_type = "application/json"
         rep.data = json.dumps(data).encode("utf-8")
@@ -1935,6 +1942,111 @@ class ContactImageResourceEnd:
         rep.set_header("Content-Length", data["length"])
         rep.stream = agent.org.getImg(pre=prefix)
 
+class MetadataImageResourceEnd:
+    @staticmethod
+    def on_post(req, rep, name):
+        """
+
+        Parameters:
+            req: falcon.Request HTTP request
+            rep: falcon.Response HTTP response
+            name: human-readable name or qb64 identifier prefix to associate with image
+
+        ---
+         summary: Uploads an image to associate with local identifier.
+         description: Uploads an image to associate with local identifier.
+         tags:
+            - Local metadata
+         parameters:
+           - in: path
+             name: name
+             schema:
+                type: string
+             description: human-readable name or identifier prefix to associate image to
+         requestBody:
+             required: true
+             content:
+                image/jpg:
+                  schema:
+                    type: string
+                    format: binary
+                image/png:
+                  schema:
+                    type: string
+                    format: binary
+         responses:
+            200:
+              description: Image successfully uploaded
+            400:
+              description: image too big to save
+            404:
+              description: name is not a local identifier
+
+        """
+        agent = req.context.agent
+        
+        # Look up the hab by name or prefix
+        hab = agent.hby.habs[name] if name in agent.hby.habs else agent.hby.habByName(name)
+        if hab is None:
+            raise falcon.HTTPNotFound(
+                description=f"{name} is not a local identifier"
+            )
+
+        if req.content_length > 1000000:
+            raise falcon.HTTPBadRequest(description="image too big to save")
+
+        agent.localOrg.setImg(pre=hab.pre, typ=req.content_type, stream=req.bounded_stream)
+        rep.status = falcon.HTTP_202
+
+    @staticmethod
+    def on_get(req, rep, name):
+        """Local metadata image GET endpoint
+
+         Parameters:
+             req: falcon.Request HTTP request
+             rep: falcon.Response HTTP response
+             name: human-readable name or qb64 identifier prefix to get
+
+        ---
+         summary:  Get local metadata image for local identifier
+         description:  Get local metadata image for local identifier
+         tags:
+            - Local metadata
+         parameters:
+           - in: path
+             name: name
+             schema:
+               type: string
+             required: true
+             description: human-readable name or qb64 identifier prefix to get
+         responses:
+            200:
+               description: Local metadata image successfully retrieved
+               content:
+                   image/jpg:
+                     schema:
+                         description: Image
+                         type: binary
+            404:
+               description: No local metadata image found
+        """
+        agent = req.context.agent
+        
+        # Look up the hab by name or prefix
+        hab = agent.hby.habs[name] if name in agent.hby.habs else agent.hby.habByName(name)
+        if hab is None:
+            raise falcon.HTTPNotFound(
+                description=f"{name} is not a local identifier"
+            )
+
+        data = agent.localOrg.getImgData(pre=hab.pre)
+        if data is None:
+            raise falcon.HTTPNotFound(description=f"no image available for {name}")
+
+        rep.status = falcon.HTTP_200
+        rep.set_header("Content-Type", data["type"])
+        rep.set_header("Content-Length", data["length"])
+        rep.stream = agent.localOrg.getImg(pre=hab.pre)
 
 class ContactResourceEnd:
 
@@ -2139,6 +2251,64 @@ class ContactResourceEnd:
             )
 
         rep.status = falcon.HTTP_202
+
+
+class MetadataResourceEnd:
+
+    @staticmethod
+    def on_put(req, rep, name):
+        """Local metadata PUT endpoint
+
+        Parameters:
+            req: falcon.Request HTTP request
+            rep: falcon.Response HTTP response
+            name: human-readable name or prefix of identifier to update metadata information
+
+        ---
+        summary:  Update provided fields in metadata information associated with local identifier
+        description:  Update provided fields in metadata information associated with local identifier.  All
+                      information is metadata and kept in local storage only
+        tags:
+           - Local metadata
+        parameters:
+          - in: path
+            name: name
+            schema:
+              type: string
+            required: true
+            description: human-readable name or qb64 identifier prefix to add metadata to
+        requestBody:
+            required: true
+            content:
+              application/json:
+                schema:
+                    description: Local metadata information
+                    type: object
+
+        responses:
+           200:
+              description: Updated metadata information for local identifier
+           400:
+              description: Invalid identifier used to update local metadata information
+        """
+        agent = req.context.agent
+        body = req.get_media()
+
+        # Look up the hab by name or prefix
+        hab = agent.hby.habs[name] if name in agent.hby.habs else agent.hby.habByName(name)
+        if hab is None:
+            raise falcon.HTTPBadRequest(
+                description=f"{name} is not a local identifier, metadata information only for local identifiers"
+            )
+
+        if "id" in body:
+            del body["id"]
+
+        agent.localOrg.replace(hab.pre, body)
+        metadata = agent.localOrg.get(hab.pre)
+
+        rep.status = falcon.HTTP_200
+        rep.data = json.dumps(metadata).encode("utf-8")
 
 
 class GroupMemberCollectionEnd:

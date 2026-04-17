@@ -9,7 +9,6 @@ from builtins import isinstance
 from dataclasses import asdict
 import json
 import os
-import pytest
 from datetime import datetime
 
 import falcon
@@ -412,10 +411,10 @@ def test_identifier_collection_end(helpers):
 
         # Rotate aid1
         salter = core.Salter(raw=salt)
-        creator = keeping.SaltyCreator(salt=salter.qb64, stem="signify:aid", tier=coring.Tiers.low)
+        creator = keeping.SaltyCreator(salt=salter.qb64, stem="signify:aid", tier=core.signing.Tiers.low)
 
-        signers = creator.create(pidx=0, ridx=1, tier=coring.Tiers.low, temp=False, count=1)
-        nsigners = creator.create(pidx=0, ridx=2, tier=coring.Tiers.low, temp=False, count=1)
+        signers = creator.create(pidx=0, ridx=1, tier=core.signing.Tiers.low, temp=False, count=1)
+        nsigners = creator.create(pidx=0, ridx=2, tier=core.signing.Tiers.low, temp=False, count=1)
 
         keys = [signer.verfer.qb64 for signer in signers]
         ndigs = [coring.Diger(ser=nsigner.verfer.qb64b) for nsigner in nsigners]
@@ -524,10 +523,10 @@ def test_identifier_collection_end(helpers):
 
         # rotate aid3
         salter = core.Salter(raw=salt)
-        creator = keeping.SaltyCreator(salt=salter.qb64, stem="signify:aid", tier=coring.Tiers.low)
+        creator = keeping.SaltyCreator(salt=salter.qb64, stem="signify:aid", tier=core.signing.Tiers.low)
 
-        signers = creator.create(pidx=3, ridx=1, tier=coring.Tiers.low, temp=False, count=1)
-        nsigners = creator.create(pidx=3, ridx=2, tier=coring.Tiers.low, temp=False, count=1)
+        signers = creator.create(pidx=3, ridx=1, tier=core.signing.Tiers.low, temp=False, count=1)
+        nsigners = creator.create(pidx=3, ridx=2, tier=core.signing.Tiers.low, temp=False, count=1)
 
         keys = [signer.verfer.qb64 for signer in signers]
         ndigs = [coring.Diger(ser=nsigner.verfer.qb64b) for nsigner in nsigners]
@@ -1362,6 +1361,174 @@ def test_contact_ends(helpers):
         headers = response.headers
         assert headers["Content-Type"] == "image/png"
         assert headers["Content-Length"] == "10000"
+
+
+def test_identifier_metadata_ends(helpers):
+    with helpers.openKeria() as (agency, agent, app, client):
+        idColEnd = aiding.IdentifierCollectionEnd()
+        app.add_route("/identifiers", idColEnd)
+        aidEnd = aiding.IdentifierResourceEnd()
+        app.add_route("/identifiers/{name}", aidEnd)
+        metadataEnd = aiding.MetadataResourceEnd()
+        app.add_route("/identifiers/{name}/metadata", metadataEnd)
+
+        client = testing.TestClient(app)
+
+        salt = b'0123456789abcdef'
+        name = "user1"
+        op = helpers.createAid(client, name, salt)
+        aid = op["response"]
+        prefix = aid['i']
+
+        metadata_data = {
+            "displayName": "John Doe",
+            "theme": "dark",
+            "color": "#3498db",
+            "bio": "Software developer and KERI enthusiast"
+        }
+        b = json.dumps(metadata_data).encode("utf-8")
+        response = client.simulate_put(f"/identifiers/{name}/metadata", body=b)
+        assert response.status == falcon.HTTP_200
+        result = response.json
+        assert result["displayName"] == "John Doe"
+        assert result["theme"] == "dark"
+        assert result["color"] == "#3498db"
+        assert result["bio"] == "Software developer and KERI enthusiast"
+
+        response = client.simulate_get(f"/identifiers/{prefix}")
+        assert response.status == falcon.HTTP_200
+        identifier_data = response.json
+        assert "metadata" in identifier_data
+        metadata = identifier_data["metadata"]
+        assert metadata["displayName"] == "John Doe"
+        assert metadata["theme"] == "dark"
+        assert metadata["color"] == "#3498db"
+        assert metadata["bio"] == "Software developer and KERI enthusiast"
+
+        response = client.simulate_get(f"/identifiers/{name}")
+        assert response.status == falcon.HTTP_200
+        identifier_data = response.json
+        assert "metadata" in identifier_data
+        metadata = identifier_data["metadata"]
+        assert metadata["displayName"] == "John Doe"
+        assert metadata["theme"] == "dark"
+        assert metadata["color"] == "#3498db"
+        assert metadata["bio"] == "Software developer and KERI enthusiast"
+
+        update_data = {
+            "displayName": "Jane Smith",
+            "theme": "light",
+            "location": "San Francisco, CA"
+        }
+        b = json.dumps(update_data).encode("utf-8")
+        response = client.simulate_put(f"/identifiers/{name}/metadata", body=b)
+        assert response.status == falcon.HTTP_200
+        result = response.json
+        assert result["displayName"] == "Jane Smith"
+        assert result["theme"] == "light"
+        assert result["location"] == "San Francisco, CA"
+        assert "color" not in result
+        assert "bio" not in result
+
+        empty_data = {}
+        b = json.dumps(empty_data).encode("utf-8")
+        response = client.simulate_put(f"/identifiers/{name}/metadata", body=b)
+        assert response.status == falcon.HTTP_200
+        result = response.json
+        assert result.get("id") is not None
+        assert "displayName" not in result
+        assert "theme" not in result
+
+        bad_metadata = {"displayName": "Invalid User"}
+        b = json.dumps(bad_metadata).encode("utf-8")
+        response = client.simulate_put(f"/identifiers/badname/metadata", body=b)
+        assert response.status == falcon.HTTP_400
+        assert response.json == {'title': '400 Bad Request', 'description': 'badname is not a local identifier, metadata information only for local identifiers'}
+
+        metadata_with_id = {
+            "id": "should_be_removed",
+            "displayName": "Test User",
+            "avatarUrl": "https://example.com/avatar.jpg"
+        }
+        b = json.dumps(metadata_with_id).encode("utf-8")
+        response = client.simulate_put(f"/identifiers/{name}/metadata", body=b)
+        assert response.status == falcon.HTTP_200
+        result = response.json
+        assert result["id"] == prefix
+        assert result["displayName"] == "Test User"
+        assert result["avatarUrl"] == "https://example.com/avatar.jpg"
+
+
+def test_identifier_metadata_image_ends(helpers):
+    """Test the /identifiers/{name}/metadata/img endpoints for profile pictures"""
+    with helpers.openKeria() as (agency, agent, app, client):
+        idColEnd = aiding.IdentifierCollectionEnd()
+        app.add_route("/identifiers", idColEnd)
+        aidEnd = aiding.IdentifierResourceEnd()
+        app.add_route("/identifiers/{name}", aidEnd)
+        metadataImgEnd = aiding.MetadataImageResourceEnd()
+        app.add_route("/identifiers/{name}/metadata/img", metadataImgEnd)
+
+        client = testing.TestClient(app)
+
+        salt = b'0123456789abcdef'
+        name = "user1"
+        op = helpers.createAid(client, name, salt)
+        aid = op["response"]
+        prefix = aid['i']
+
+        data = bytearray(os.urandom(5000))
+        headers = {"Content-Type": "image/png", "Content-Length": "5000"}
+        response = client.simulate_post(f"/identifiers/badname/metadata/img", body=data, headers=headers)
+        assert response.status == falcon.HTTP_404
+        assert response.json == {'title': '404 Not Found', 'description': 'badname is not a local identifier'}
+
+        large_data = bytearray(os.urandom(1000001))
+        headers = {"Content-Type": "image/png", "Content-Length": "1000001"}
+        response = client.simulate_post(f"/identifiers/{name}/metadata/img", body=large_data, headers=headers)
+        assert response.status == falcon.HTTP_400
+        assert response.json == {'title': '400 Bad Request', 'description': 'image too big to save'}
+
+        data = bytearray(os.urandom(50000))
+        headers = {"Content-Type": "image/jpeg", "Content-Length": "50000"}
+        response = client.simulate_post(f"/identifiers/{name}/metadata/img", body=data, headers=headers)
+        assert response.status == falcon.HTTP_202
+
+        response = client.simulate_get(f"/identifiers/{prefix}/metadata/img")
+        assert response.status == falcon.HTTP_200
+        assert response.content == data
+        resp_headers = response.headers
+        assert resp_headers["Content-Type"] == "image/jpeg"
+        assert resp_headers["Content-Length"] == "50000"
+
+        response = client.simulate_get(f"/identifiers/{name}/metadata/img")
+        assert response.status == falcon.HTTP_200
+        assert response.content == data
+        resp_headers = response.headers
+        assert resp_headers["Content-Type"] == "image/jpeg"
+        assert resp_headers["Content-Length"] == "50000"
+
+        name2 = "user2"
+        helpers.createAid(client, name2, b'0123456789cdefgh')
+        response = client.simulate_get(f"/identifiers/{name2}/metadata/img")
+        assert response.status == falcon.HTTP_404
+        assert response.json == {'title': '404 Not Found', 'description': 'no image available for user2'}
+
+        response = client.simulate_get(f"/identifiers/badname/metadata/img")
+        assert response.status == falcon.HTTP_404
+        assert response.json == {'title': '404 Not Found', 'description': 'badname is not a local identifier'}
+
+        png_data = bytearray(os.urandom(30000))
+        headers = {"Content-Type": "image/png", "Content-Length": "30000"}
+        response = client.simulate_post(f"/identifiers/{name}/metadata/img", body=png_data, headers=headers)
+        assert response.status == falcon.HTTP_202
+
+        response = client.simulate_get(f"/identifiers/{name}/metadata/img")
+        assert response.status == falcon.HTTP_200
+        assert response.content == png_data
+        resp_headers = response.headers
+        assert resp_headers["Content-Type"] == "image/png"
+        assert resp_headers["Content-Length"] == "30000"
 
 
 def test_identifier_resource_end(helpers):
