@@ -1047,16 +1047,6 @@ class AgentSpecResource:
                 self.spec.path(path=route.uri_template, operations=operations)
             routes_to_check.extend(route.children)
 
-    def _get_op_depends(self):
-        return {
-            "oneOf": [
-                {"$ref": "#/components/schemas/GroupOperation"},
-                {"$ref": "#/components/schemas/WitnessOperation"},
-                {"$ref": "#/components/schemas/DoneOperation"},
-                {"$ref": "#/components/schemas/DelegationOperation"},
-            ]
-        }
-
     def _get_valid_methods(self, spec):
         return set(VALID_METHODS[spec.openapi_version.major])
 
