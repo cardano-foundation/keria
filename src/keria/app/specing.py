@@ -956,13 +956,7 @@ class AgentSpecResource:
         )
         self.spec.components.schemas["DelegatorOperationMetadata"]["properties"][
             "depends"
-        ] = {
-            "oneOf": [
-                {"$ref": "#/components/schemas/GroupOperation"},
-                {"$ref": "#/components/schemas/WitnessOperation"},
-                {"$ref": "#/components/schemas/DoneOperation"},
-            ]
-        }
+        ] = {"$ref": "#/components/schemas/KelOperation"}
 
         self.spec.components.schema(
             "PendingDelegatorOperation",
@@ -990,12 +984,20 @@ class AgentSpecResource:
             ]
         }
 
+        self.spec.components.schemas["KelOperation"] = {
+            "oneOf": [
+                {"$ref": "#/components/schemas/GroupOperation"},
+                {"$ref": "#/components/schemas/WitnessOperation"},
+                {"$ref": "#/components/schemas/DoneOperation"},
+                {"$ref": "#/components/schemas/DelegationOperation"},
+            ]
+        }
         self.spec.components.schemas["RegistryOperationMetadata"]["properties"][
             "depends"
-        ] = self._get_op_depends()
+        ] = {"$ref": "#/components/schemas/KelOperation"}
         self.spec.components.schemas["CredentialOperationMetadata"]["properties"][
             "depends"
-        ] = self._get_op_depends()
+        ] = {"$ref": "#/components/schemas/KelOperation"}
 
         self.spec.components.schemas["Operation"] = {
             "oneOf": [

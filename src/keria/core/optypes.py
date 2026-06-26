@@ -333,6 +333,14 @@ GroupOperation = Union[
 ]
 
 
+KelOperation = Union[
+    "GroupOperation",
+    "WitnessOperation",
+    "DoneOperation",
+    "DelegationOperation",
+]
+
+
 @dataclass
 class DelegatorOperationMetadata:
     pre: str
@@ -345,7 +353,7 @@ class DelegatorOperationMetadata:
             )
         },
     )
-    depends: Union["GroupOperation", "WitnessOperation", "DoneOperation"] = None  # type: ignore
+    depends: KelOperation = None  # type: ignore
 
 
 @dataclass
@@ -597,9 +605,7 @@ ChallengeOperation = Union[
 @dataclass
 class RegistryOperationMetadata:
     pre: str
-    depends: Union[
-        "GroupOperation", "WitnessOperation", "DoneOperation", "DelegationOperation"
-    ]
+    depends: KelOperation = None  # type: ignore
     anchor: Anchor = field(
         default_factory=Anchor,
         metadata={
@@ -667,9 +673,7 @@ RegistryOperation = Union[
 @dataclass
 class CredentialOperationMetadata:
     ced: Union[ACDC_V_1, ACDC_V_2]  # type: ignore
-    depends: Union[
-        "GroupOperation", "WitnessOperation", "DoneOperation", "DelegationOperation"
-    ] = None  # type: ignore
+    depends: KelOperation = None  # type: ignore
 
 
 @dataclass
