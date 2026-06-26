@@ -436,40 +436,13 @@ def namedtupleToEnum(nt_instance, enum_name="AutoEnum"):
     return Enum(enum_name, members, type=str)
 
 
-def normalizeBoolLiteralSchema(node):
-    """Convert marshmallow bool Literal output to OpenAPI const semantics."""
-    if isinstance(node, dict):
-        enum_values = node.get("enum")
-        if (
-            isinstance(enum_values, list)
-            and len(enum_values) == 1
-            and isinstance(enum_values[0], bool)
-            and node.get("default") is enum_values[0]
-        ):
-            node.pop("enum", None)
-            node.pop("default", None)
-            node["type"] = "boolean"
-            node["const"] = enum_values[0]
+def constFromMetadata(self, field, **kwargs):
+    """Emit JSON-Schema ``const`` from ``metadata={"const": <value>}`` on any field.
 
-        for value in node.values():
-            normalizeBoolLiteralSchema(value)
-
-        properties = node.get("properties")
-        required = node.get("required")
-        if isinstance(properties, dict):
-            required_fields = required if isinstance(required, list) else []
-            for name, schema in properties.items():
-                if (
-                    isinstance(schema, dict)
-                    and schema.get("type") == "boolean"
-                    and isinstance(schema.get("const"), bool)
-                    and name not in required_fields
-                ):
-                    required_fields.append(name)
-
-            if required_fields:
-                node["required"] = required_fields
-
-    elif isinstance(node, list):
-        for value in node:
-            normalizeBoolLiteralSchema(value)
+    apispec's metadata passthrough drops ``const`` because its allowlist predates
+    OpenAPI 3.1, so a fixed value (e.g. operation ``done``) would otherwise render as
+    an unconstrained type. ``self`` is the converter apispec binds this to.
+    """
+    if "const" in field.metadata:
+        return {"const": field.metadata["const"]}
+    return {}
