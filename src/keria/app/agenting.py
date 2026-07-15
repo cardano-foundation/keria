@@ -947,9 +947,7 @@ def createAdminServerDoer(config: KERIAServerConfig, agency: Agency):
     if config.cors:
         adminApp.add_middleware(middleware=httping.HandleCORS())
     adminApp.add_middleware(
-        authing.AuthenticationMiddleware(
-            agency=agency, authn=authn, allowed=["/agent"]
-        )
+        authing.AuthenticationMiddleware(agency=agency, authn=authn, allowed=["/agent"])
     )
     adminApp.req_options.media_handlers.update(media.Handlers())
     adminApp.resp_options.media_handlers.update(media.Handlers())
