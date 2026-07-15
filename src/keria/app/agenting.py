@@ -297,7 +297,7 @@ class Agency(doing.DoDoer):
 
         # Renames sub-section of config
         habName = f"agent-{caid}"
-        config_name = self.name if self.name else "keria"
+        config_name = self.name if self.name in config else "keria"
         if config_name in config:
             config[habName] = config[config_name]
             del config[config_name]
