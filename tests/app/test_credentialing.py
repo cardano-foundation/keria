@@ -38,6 +38,78 @@ def test_load_ends(helpers):
         assert isinstance(end, credentialing.SchemaResourceEnd)
         (end, *_) = app._router.find("/identifiers/NAME/registries")
         assert isinstance(end, credentialing.RegistryCollectionEnd)
+        (end, *_) = app._router.find("/credentials/verify")
+        assert isinstance(end, credentialing.CredentialVerificationCollectionEnd)
+        (end, *_) = app._router.find("/verify")
+        assert isinstance(end, credentialing.VerificationCollectionEnd)
+
+
+def test_verify_end(helpers):
+    salt = b"0123456789abcdef"
+    with helpers.openKeria() as (agency, agent, app, client):
+        app.add_route("/identifiers", aiding.IdentifierCollectionEnd())
+        app.add_route("/verify", credentialing.VerificationCollectionEnd())
+
+        op = helpers.createAid(client, "issuer", salt)
+        issuerPre = op["response"]["i"]
+        assert issuerPre in agent.hby.kevers
+
+        # registry inception (vcp) -> registry operation
+        vcp = eventing.incept(issuerPre)
+        body = dict(serder=vcp.raw.decode("utf-8"), atc="")
+        res = client.simulate_post("/verify", body=json.dumps(body).encode("utf-8"))
+        assert res.status_code == 202
+        rop = res.json
+        assert rop["name"] == f"registry.{vcp.pre}"
+        assert rop["metadata"]["pre"] == issuerPre
+        assert rop["metadata"]["anchor"] == dict(i=vcp.pre, s="0", d=vcp.pre)
+
+        # TEL issuance (iss) -> credential operation keyed on the credential SAID
+        iss = eventing.issue(
+            vcdig="EBfdlu8R27Fbx-ehrqwImnK-8Cm79sqbAQ4MmvEAYqao", regk=vcp.pre
+        )
+        body = dict(serder=iss.raw.decode("utf-8"), atc="")
+        res = client.simulate_post("/verify", body=json.dumps(body).encode("utf-8"))
+        assert res.status_code == 202
+        iop = res.json
+        assert iop["name"] == f"verifyCredential.{iss.sad['i']}"
+        assert iop["metadata"]["ced"]["d"] == iss.sad["i"]
+
+        # ACDC -> credential operation
+        creder = serdering.SerderACDC(
+            sad=dict(
+                v="ACDC10JSON000000_",
+                d="",
+                i=issuerPre,
+                ri=vcp.pre,
+                s="EBfdlu8R27Fbx-ehrqwImnK-8Cm79sqbAQ4MmvEAYqao",
+                a={},
+            ),
+            makify=True,
+        )
+        body = dict(serder=creder.raw.decode("utf-8"), atc="")
+        res = client.simulate_post("/verify", body=json.dumps(body).encode("utf-8"))
+        assert res.status_code == 202
+        cop = res.json
+        assert cop["name"] == f"verifyCredential.{creder.said}"
+        assert cop["metadata"]["ced"] == creder.sad
+
+        # unsupported ilk (icp) -> 400
+        icp = agent.hby.kevers[issuerPre].serder
+        body = dict(serder=icp.raw.decode("utf-8"), atc="")
+        res = client.simulate_post("/verify", body=json.dumps(body).encode("utf-8"))
+        assert res.status_code == 400
+
+        # malformed serder -> 400
+        body = dict(serder="not a serder", atc="")
+        res = client.simulate_post("/verify", body=json.dumps(body).encode("utf-8"))
+        assert res.status_code == 400
+
+        # missing required param -> 400
+        res = client.simulate_post(
+            "/verify", body=json.dumps(dict(atc="")).encode("utf-8")
+        )
+        assert res.status_code == 400
 
 
 def test_schema_ends(helpers):
