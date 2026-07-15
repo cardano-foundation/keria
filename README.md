@@ -1,7 +1,7 @@
 # KERIA
 [![GitHub Actions](https://github.com/webOfTrust/keria/actions/workflows/python-app-ci.yml/badge.svg)](https://github.com/WebOfTrust/keria/actions)
 [![codecov](https://codecov.io/gh/WebOfTrust/keria/branch/main/graph/badge.svg?token=FR5CB2TPYG)](https://codecov.io/gh/WebOfTrust/keria)
-[![Documentation Status](https://readthedocs.org/projects/keria/badge/?version=latest)](https://keria.readthedocs.io/en/latest/?badge=latest)
+[![Documentation Status](https://img.shields.io/readthedocs/keria/latest)](https://keria.readthedocs.io/en/latest/)
 
 KERI Agent in the cloud
 
@@ -37,27 +37,18 @@ All Agent db access is through the associated Agent.
 ### Setup
 
 * Ensure [Python](https://www.python.org/downloads/) `version 3.12.2+` is installed
+* Install [uv](https://docs.astral.sh/uv/getting-started/installation/) for Python package management
 * Install [Keripy dependency](https://github.com/WebOfTrust/keripy#dependencies) (`libsodium 1.0.18+`)
 
+### Quick Start
 
-#### Build from source
+```bash
+# Prerequisites: Python 3.12.2+, uv, libsodium
+make install-dev
+make test
 
-* Setup virtual environment:
-    ```bash
-    python3 -m venv venv
-    ```
-* Activate virtual environment:
-    ```bash
-    source venv/bin/activate
-    ```
-* Install dependencies:
-    ```bash
-    pip install -r requirements.txt
-    ```
-* Run agent:
-    ```bash
-    keria start --config-dir scripts --config-file demo-witness-oobis
-    ```
+uv run keria start --config-dir scripts --config-file demo-witness-oobis
+```
 
 #### Build with docker
 
@@ -88,14 +79,14 @@ You can see a [working example here](https://github.com/WebOfTrust/signify-ts/bl
 
 ### Running Tests
 
-* Install `pytest`:
-    ```bash
-      pip install pytest
-    ```
-
 * Run the test suites:
     ```bash
-      pytest tests/
+    make test
+    ```
+
+* Run tests with coverage:
+    ```bash
+    make test-coverage
     ```
 
 ## Publishing containers

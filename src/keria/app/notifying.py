@@ -4,12 +4,15 @@ KERIA
 keria.app.notifying module
 
 """
+
 import json
 
 import falcon
-from keri.peer import exchanging
 
 from keria.core import httping
+from dataclasses import dataclass, field
+from typing import Optional
+from marshmallow import fields
 
 
 def loadEnds(app):
@@ -19,11 +22,32 @@ def loadEnds(app):
     app.add_route("/notifications/{said}", noteRes)
 
 
-class NotificationCollectionEnd:
+@dataclass
+class NotificationData:
+    r: Optional[str] = field(
+        default=None, metadata={"marshmallow_field": fields.String(allow_none=False)}
+    )
+    d: Optional[str] = field(
+        default=None, metadata={"marshmallow_field": fields.String(allow_none=False)}
+    )
+    m: Optional[str] = field(
+        default=None, metadata={"marshmallow_field": fields.String(allow_none=False)}
+    )
+    # Override the schema to force additionalProperties=True
 
+
+@dataclass
+class Notification:
+    i: str
+    dt: str
+    r: bool
+    a: NotificationData
+
+
+class NotificationCollectionEnd:
     @staticmethod
     def on_get(req, rep):
-        """ Notification GET endpoint
+        """Notification GET endpoint
 
         Parameters:
             req: falcon.Request HTTP request
@@ -45,7 +69,13 @@ class NotificationCollectionEnd:
 
         responses:
            200:
-              description: List of contact information for remote identifiers
+                description: List of contact information for remote identifiers
+                content:
+                    application/json:
+                        schema:
+                            type: array
+                            items:
+                                $ref: '#/components/schemas/Notification'
         """
         agent = req.context.agent
 
@@ -73,10 +103,9 @@ class NotificationCollectionEnd:
 
 
 class NotificationResourceEnd:
-
     @staticmethod
     def on_put(req, rep, said):
-        """ Notification PUT endpoint
+        """Notification PUT endpoint
 
         Parameters:
             req: falcon.Request HTTP request
@@ -105,14 +134,16 @@ class NotificationResourceEnd:
         mared = agent.notifier.mar(said)
         if not mared:
             rep.status = falcon.HTTP_404
-            rep.data = json.dumps(dict(msg=f"no notification to mark as read for {said}")).encode("utf-8")
+            rep.data = json.dumps(
+                dict(msg=f"no notification to mark as read for {said}")
+            ).encode("utf-8")
             return
 
         rep.status = falcon.HTTP_202
 
     @staticmethod
     def on_delete(req, rep, said):
-        """ Notification DELETE endpoint
+        """Notification DELETE endpoint
 
         Parameters:
             req: falcon.Request HTTP request

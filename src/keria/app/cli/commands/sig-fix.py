@@ -4,10 +4,12 @@ KERI
 keri.kli.commands module
 
 """
+
 import argparse
 
 from hio.base import doing
 from keri import help, kering
+from keri.app import directing
 from keri.app import habbing
 from keri.app.cli.common import existing
 from keri.core import serdering, coring
@@ -17,23 +19,29 @@ from keria.db import basing as abase
 logger = help.ogler.getLogger()
 
 parser = argparse.ArgumentParser(
-    description='Migrates existing public key/next key digest data from First Seen Event logs to signing member IDs '
-                '(smids) and rotation member IDs (rmids) on SignifyGroupHabs')
-parser.set_defaults(handler=lambda args: handler(args),
-                    transferable=True)
-parser.add_argument('--base', '-b', help='additional optional prefix to file location of KERI keystore',
-                    required=False, default="")
-parser.add_argument('--force', action="store_true", required=False, default=False,
-                    help='Perform update')
+    description="Migrates existing public key/next key digest data from First Seen Event logs to signing member IDs "
+    "(smids) and rotation member IDs (rmids) on SignifyGroupHabs"
+)
+parser.set_defaults(handler=lambda args: handler(args), transferable=True)
+parser.add_argument(
+    "--base",
+    "-b",
+    help="additional optional prefix to file location of KERI keystore",
+    required=False,
+    default="",
+)
+parser.add_argument(
+    "--force", action="store_true", required=False, default=False, help="Perform update"
+)
 
 
 def handler(args):
     kwa = dict(args=args)
-    return [doing.doify(fix, **kwa)]
+    return directing.runController([doing.doify(fix, **kwa)], expire=0.0)
 
 
 def fix(tymth, tock=0.0, **opts):
-    _ = (yield tock)
+    _ = yield tock
     args = opts["args"]
 
     prefix_by_public_key = dict()
@@ -42,7 +50,7 @@ def fix(tymth, tock=0.0, **opts):
     adb = abase.AgencyBaser(name="TheAgency", base=args.base, reopen=True, temp=False)
 
     caids = []
-    for ((caid,), _) in adb.agnt.getItemIter():
+    for (caid,), _ in adb.agnt.getItemIter():
         caids.append(caid)
 
     signify_group_habs = dict()
@@ -54,16 +62,13 @@ def fix(tymth, tock=0.0, **opts):
 
     # create caches of existing public keys and next key digests and the associated prefixes
     for caid in caids:
-        db = basing.Baser(name=caid,
-                          base=args.base,
-                          temp=False,
-                          reopen=False)
+        db = basing.Baser(name=caid, base=args.base, temp=False, reopen=False)
         try:
             db.reopen()
         except kering.DatabaseError:
             return -1
 
-        for pre, fn, dig in db.getFelItemAllPreIter(key=b''):
+        for pre, fn, dig in db.getFelItemAllPreIter():
             dgkey = dbing.dgKey(pre, dig)
             if not (raw := db.getEvt(key=dgkey)):
                 raise kering.MissingEntryError("Missing event for dig={}.".format(dig))
@@ -81,6 +86,9 @@ def fix(tymth, tock=0.0, **opts):
 
             for diger in ndigers:
                 prefix_by_next_key_digest[diger.qb64] = val
+        # Needed for muslc envs with lmdb so they don't throw:
+        # `mdb_txn_renew: MDB_BAD_RSLOT: Invalid reuse of reader locktable slot`
+        db.close(clear=db.temp)
 
     # pretty
     pre_name_cache = dict()
@@ -105,8 +113,12 @@ def fix(tymth, tock=0.0, **opts):
                 print(f"\t {hab.name} - {pre} - {type(hab)}")
                 print()
 
-                if not hasattr(hab, "smids") and not hasattr(hab, "rmids") or \
-                        hab.smids is None and hab.rmids is None:
+                if (
+                    not hasattr(hab, "smids")
+                    and not hasattr(hab, "rmids")
+                    or hab.smids is None
+                    and hab.rmids is None
+                ):
                     print()
                     smids = set()
                     rmids = set()
@@ -118,7 +130,9 @@ def fix(tymth, tock=0.0, **opts):
                         if v.qb64 in prefix_by_next_key_digest:
                             rmids.add(prefix_by_next_key_digest[v.qb64][0].qb64)
 
-                    print(f"\t Proposed smids and rmids updates for {hab.name} - {pre}:")
+                    print(
+                        f"\t Proposed smids and rmids updates for {hab.name} - {pre}:"
+                    )
                     print(f"\t\t smids: {smids}")
                     for smid in smids:
                         print(f"\t\t\t -> {smid} {pre_name_cache.get(smid)}")
