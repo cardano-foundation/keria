@@ -161,6 +161,8 @@ def test_signed_header_authenticator(mockHelpingNowUTC):
                 ("Content-Type", "application/json"),
                 ("Content-Length", "256"),
                 ("Connection", "close"),
+                ("Signify-Resource", agent.agentHab.pre),
+                ("Signify-Timestamp", "2022-09-24T00:05:48.196795+00:00"),
             ]
         )
 
