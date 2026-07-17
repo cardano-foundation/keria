@@ -1019,8 +1019,8 @@ def setupDoers(agency: Agency, config: KERIAServerConfig, temp=False, cf=None):
     """
     Sets up the HIO coroutines the KERIA agent server is composed of including three HTTP servers for a KERIA agent server:
     1. Boot server for bootstrapping agents. Signify calls this with a signed inception event.
-    2. Admin server for administrative tasks like creating agents.
-    3. HTTP server for all other agent operations.
+    2. Admin server for any Signify client related actions after bootstrapping.
+    3. HTTP server for all other external agents send KERI events or messages for interactions.
 
     Parameters:
         config (KERIAServerConfig): Configuration for the KERIA server.

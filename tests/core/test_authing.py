@@ -29,7 +29,7 @@ def create_req(**kwargs):
 
 
 def test_signed_header_authenticator(mockHelpingNowUTC):
-    salt = b"0123456789abcdef"
+    salt = b"1111456789abcdef"
     salter = core.Salter(raw=salt)
 
     with habbing.openHab(name="caid", salt=salt, temp=True) as (
@@ -81,12 +81,12 @@ def test_signed_header_authenticator(mockHelpingNowUTC):
             "Connection": "close",
             "Content-Length": "256",
             "Content-Type": "application/json",
-            "Signature": 'indexed="?0";signify="0BA9SX7Jyn66ZdCPOb0WqDEn1UC49GeSPypjVgeMrt6VLWKjEw'
-            '9ij7Ndur7Wcrru_5eQNbSiNaiP4NQYWht5srEL"',
-            "Signature-Input": 'signify=("signify-resource" "@method" "@path" '
-            '"signify-timestamp");created=1609459200;keyid="EJPEPKslRHD_fkug3zm'
-            'oyjQ90DazQAYWI8JIrV2QXyhg";alg="ed25519"',
-            "Signify-Resource": "EJPEPKslRHD_fkug3zmoyjQ90DazQAYWI8JIrV2QXyhg",
+            "Signature": 'indexed="?0";signify="0BDBVr5ape8f9nV60ThhWOKvu5HKXQc5798Sz95FIoqXQ9vvL8HoYsLRp5aN86MIXr0GqH37SowsmTP-k9UhYSkN"',
+            "Signature-Input": 'signify=("signify-resource" "@method" "@path" "signify-timestamp");'
+            "created=1609459200;"
+            'keyid="EPwUOBk9QkxPM20JBaf_pFXPytSjTUoyxbx95uZJE1Hq";'
+            'alg="ed25519"',
+            "Signify-Resource": "EPwUOBk9QkxPM20JBaf_pFXPytSjTUoyxbx95uZJE1Hq",
             "Signify-Timestamp": "2022-09-24T00:05:48.196795+00:00",
         }
 
@@ -111,12 +111,12 @@ def test_signed_header_authenticator(mockHelpingNowUTC):
         headers["Signature-Input"] = (
             'notsignify=("signify-resource" "@method" "@path" '
             '"signify-timestamp");created=1609459200;keyid'
-            '="EJPEPKslRHD_fkug3zmoyjQ90DazQAYWI8JIrV2QXyhg";alg="ed25519"'
+            '="EPwUOBk9QkxPM20JBaf_pFXPytSjTUoyxbx95uZJE1Hq";alg="ed25519"'
         )
 
         headers["Signature"] = (
             'indexed="?0";signify'
-            '="0BA9SX7Jyn66ZdCPOb0WqDEn1UC49GeSPypjVgeMrt6VLWKjEw9ij7Ndur7Wcrru_5eQNbSiNaiP4NQYWht5srEX"'
+            '="0BDBVr5ape8f9nV60ThhWOKvu5HKXQc5798Sz95FIoqXQ9vvL8HoYsLRp5aN86MIXr0GqH37SowsmTP-k9UhYSkM"'
         )
         req = create_req(method="POST", path="/boot", headers=dict(headers))
 
@@ -128,13 +128,13 @@ def test_signed_header_authenticator(mockHelpingNowUTC):
         headers["Signature-Input"] = (
             'signify=("signify-resource" "@method" "@path" '
             '"signify-timestamp");created=1609459200;keyid'
-            '="EJPEPKslRHD_fkug3zmoyjQ90DazQAYWI8JIrV2QXyhg";alg="ed25519"'
+            '="EPwUOBk9QkxPM20JBaf_pFXPytSjTUoyxbx95uZJE1Hq";alg="ed25519"'
         )
 
         # Bad signature
         headers["Signature"] = (
             'indexed="?0";signify'
-            '="0BA9SX7Jyn66ZdCPOb0WqDEn1UC49GeSPypjVgeMrt6VLWKjEw9ij7Ndur7Wcrru_5eQNbSiNaiP4NQYWht5srEX"'
+            '="0BDBVr5ape8f9nV60ThhWOKvu5HKXQc5798Sz95FIoqXQ9vvL8HoYsLRp5aN86MIXr0GqH37SowsmTP-k9UhYSkM"'
         )
         req = create_req(method="POST", path="/boot", headers=dict(headers))
 
@@ -143,13 +143,13 @@ def test_signed_header_authenticator(mockHelpingNowUTC):
         assert str(e.value) == (
             "Signature for Inputage(name='signify', fields=['signify-resource', '@method', "
             "'@path', 'signify-timestamp'], created=1609459200, "
-            "keyid='EJPEPKslRHD_fkug3zmoyjQ90DazQAYWI8JIrV2QXyhg', alg='ed25519', expires=None, "
+            "keyid='EPwUOBk9QkxPM20JBaf_pFXPytSjTUoyxbx95uZJE1Hq', alg='ed25519', expires=None, "
             "nonce=None, context=None) invalid"
         )
         # Good signature
         headers["Signature"] = (
             'indexed="?0";signify'
-            '="0BA9SX7Jyn66ZdCPOb0WqDEn1UC49GeSPypjVgeMrt6VLWKjEw9ij7Ndur7Wcrru_5eQNbSiNaiP4NQYWht5srEL"'
+            '="0BDBVr5ape8f9nV60ThhWOKvu5HKXQc5798Sz95FIoqXQ9vvL8HoYsLRp5aN86MIXr0GqH37SowsmTP-k9UhYSkN"'
         )
         req = create_req(method="POST", path="/boot", headers=dict(headers))
 
@@ -170,10 +170,10 @@ def test_signed_header_authenticator(mockHelpingNowUTC):
             "connection": "close",
             "content-length": "256",
             "content-type": "application/json",
-            "signature": 'indexed="?0";signify="0BB3hErwyi9RPtlfPvVGrGW3HaU9GbuRse1Ip5b071L5gZ90jpdgzP0seEF4OttkDkrbYTeaZUMA3lIA1sQGdOEN"',
+            "signature": 'indexed="?0";signify="0BBWiqPdnUjfwkDcFQQyUUjjATXp0mRgG7S9ikr_XZkp0Nbv77dY8syrdpJTLuU4gTfmMYJb4OIR5oN7K02CV_0I"',
             "signature-input": 'signify=("signify-resource" "@method" "@path" '
-            '"signify-timestamp");created=1609459200;keyid="EDqDrGuzned0HOKFTLqd7m7O7WGE5zYIOHrlCq4EnWxy";alg="ed25519"',
-            "signify-resource": "EDqDrGuzned0HOKFTLqd7m7O7WGE5zYIOHrlCq4EnWxy",
+            '"signify-timestamp");created=1609459200;keyid="EEAJjjsbswsipSk6qypNw9bKszVfkAWvAYonKTKWHnDt";alg="ed25519"',
+            "signify-resource": "EEAJjjsbswsipSk6qypNw9bKszVfkAWvAYonKTKWHnDt",
             "signify-timestamp": "2021-01-01T00:00:00.000000+00:00",
         }
 
