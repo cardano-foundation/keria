@@ -26,7 +26,7 @@ from keria.app import delegating
 Typeage = namedtuple(
     "Tierage",
     "oobi witness delegation group query registry credential endrole "  # type: ignore[name-match]
-    "locscheme challenge exchange submit verifyCredential done",
+    "locscheme challenge exchange submit done",
 )
 
 OpTypes = Typeage(
@@ -42,7 +42,6 @@ OpTypes = Typeage(
     challenge="challenge",
     exchange="exchange",
     submit="submit",
-    verifyCredential="verifyCredential",
     done="done",
 )
 
@@ -472,19 +471,6 @@ class Monitor:
                 done = False
 
         elif op.type in (OpTypes.credential,):
-            if "ced" not in op.metadata:
-                raise kering.ValidationError(
-                    f"invalid long running {op.type} operation, metadata missing 'ced' field"
-                )
-
-            ced = op.metadata["ced"]
-            if self.credentialer.complete(ced["d"]):
-                done = True
-                response = dict(ced=ced)
-            else:
-                done = False
-
-        elif op.type in (OpTypes.verifyCredential,):
             if "ced" not in op.metadata:
                 raise kering.ValidationError(
                     f"invalid long running {op.type} operation, metadata missing 'ced' field"

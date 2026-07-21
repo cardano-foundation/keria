@@ -707,8 +707,9 @@ class CredentialVerificationCollectionEnd:
 
         ---
         summary: Verify a credential without IPEX
-        description: Verify a credential without using IPEX (TEL should be updated separately)
+        description: Deprecated - use the generic POST /verify endpoint instead. Verify a credential without using IPEX (TEL should be updated separately)
         operationId: verifyCredential
+        deprecated: true
         tags:
            - Credentials
         requestBody:
@@ -738,6 +739,10 @@ class CredentialVerificationCollectionEnd:
            404:
               description: Malformed ACDC or iss event
         """
+        # RFC 9745: deprecated in favor of the generic POST /verify endpoint
+        rep.set_header("Deprecation", "@1784073600")  # 2026-07-15T00:00:00Z
+        rep.set_header("Link", '</verify>; rel="successor-version"')
+
         agent = req.context.agent
         body = req.get_media()
 
@@ -764,8 +769,8 @@ class CredentialVerificationCollectionEnd:
 class VerificationCollectionEnd:
     """Generic verification endpoint.
 
-    Accepts a serialized Serder and its CESR attachments,
-    returns a long running operation whose type is selected by the Serder's ilk.
+    Accepts an ACDC or TEL event (as a KED) and its CESR attachments, returns a
+    long running operation whose type is selected by the Serder's ilk.
     """
 
     @staticmethod
@@ -775,7 +780,7 @@ class VerificationCollectionEnd:
         ---
         summary: Verify a Serder (credential, registry, ...) by its ilk
         description:
-            Accepts a serialized Serder and its CESR attachments,
+            Accepts an ACDC or TEL event (as a KED) and its CESR attachments,
             returns a long running operation dispatched by the Serder's ilk.
         operationId: verify
         tags:
@@ -791,8 +796,8 @@ class VerificationCollectionEnd:
                     - atc
                   properties:
                     serder:
-                      type: string
-                      description: serialized Serder (KERI event or ACDC)
+                      type: object
+                      description: KED of ACDC or TEL event
                     atc:
                       type: string
                       description: CESR attachments for the Serder
@@ -810,14 +815,8 @@ class VerificationCollectionEnd:
         body = req.get_media()
 
         try:
-            raw = httping.getRequiredParam(body, "serder").encode("utf-8")
-            serder = serdering.Serder(raw=raw)
-        except (
-            kering.KeriError,
-            ValueError,
-            AttributeError,
-            json.decoder.JSONDecodeError,
-        ) as e:
+            serder = serdering.Serder(sad=httping.getRequiredParam(body, "serder"))
+        except (kering.KeriError, TypeError) as e:
             rep.status = falcon.HTTP_400
             rep.text = e.args[0] if e.args else str(e)
             return
@@ -826,24 +825,24 @@ class VerificationCollectionEnd:
 
         if serder.proto == Protocols.acdc:
             oid = serder.said
-            optype = longrunning.OpTypes.verifyCredential
+            optype = longrunning.OpTypes.credential
             metadata = dict(ced=serder.sad)
         elif serder.ilk == coring.Ilks.vcp:
             regk = serder.sad["i"]
             oid = regk
             optype = longrunning.OpTypes.registry
             metadata = dict(pre=serder.sad["ii"], anchor=dict(i=regk, s="0", d=regk))
-        elif serder.ilk in (coring.Ilks.iss, coring.Ilks.bis):
+        elif serder.ilk == coring.Ilks.iss:
             vcid = serder.sad["i"]
             oid = vcid
-            optype = longrunning.OpTypes.verifyCredential
+            optype = longrunning.OpTypes.credential
             metadata = dict(ced=dict(d=vcid))
         else:
             raise falcon.HTTPBadRequest(
                 description=f"unsupported ilk '{serder.ilk or serder.proto}' for verification"
             )
 
-        agent.parser.ims.extend(raw + atc.encode("utf-8"))
+        agent.parser.ims.extend(serder.raw + atc.encode("utf-8"))
         op = agent.monitor.submit(oid, optype, metadata=metadata)
         rep.status = falcon.HTTP_202
         rep.data = op.to_json().encode("utf-8")
