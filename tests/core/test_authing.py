@@ -496,6 +496,23 @@ signify-resource: EDqDrGuzned0HOKFTLqd7m7O7WGE5zYIOHrlCq4EnWxy\r
             + body
         )
 
+        middleware = authing.AuthenticationMiddleware(
+            agency=agency, authn=None, essrAuthn=authn
+        )
+        for malformed in (
+            b"GET http://127.0.0.1:3901/contacts\r\n\r\n",
+            b"GET http://127.0.0.1:3901/contacts HTTP/1.1\r\nnot-a-header\r\n\r\n",
+            b"\xff\xfe\r\n\r\n",
+        ):
+            with pytest.raises(kering.AuthNError) as e:
+                authn.inbound(sealed(malformed))
+            assert str(e.value).startswith("Invalid ESSR payload")
+
+            rep = falcon.Response()
+            middleware.process_request(sealed(malformed), rep)
+            assert rep.complete is True
+            assert rep.status == falcon.HTTP_401
+
 
 RESOURCE = "ECjmyrSFFfOb3VJi1JUKTy-Vn766h-VKl3XY8OEFdxBF"
 
@@ -616,11 +633,10 @@ def test_build_environ_header_names_are_case_insensitive():
 
 
 def test_build_environ_malformed():
-    environ = authing.ESSRAuthenticator.buildEnviron(
-        b"GET http://127.0.0.1/main HTTP/1.1\r\n"
-    )
-    assert environ["CONTENT_LENGTH"] == "0"
-    assert environ["wsgi.input"].read() == b""
+    with pytest.raises(ValueError):  # head not terminated by CRLFCRLF
+        authing.ESSRAuthenticator.buildEnviron(
+            b"GET http://127.0.0.1/main HTTP/1.1\r\n"
+        )
 
     with pytest.raises(ValueError):
         authing.ESSRAuthenticator.buildEnviron(b"GET http://127.0.0.1/main\r\n\r\n")
