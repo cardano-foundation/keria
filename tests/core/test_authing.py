@@ -504,10 +504,6 @@ signify-resource: EDqDrGuzned0HOKFTLqd7m7O7WGE5zYIOHrlCq4EnWxy\r
             b"GET http://127.0.0.1:3901/contacts HTTP/1.1\r\nnot-a-header\r\n\r\n",
             b"\xff\xfe\r\n\r\n",
         ):
-            with pytest.raises(kering.AuthNError) as e:
-                authn.inbound(sealed(malformed))
-            assert str(e.value).startswith("Invalid ESSR payload")
-
             rep = falcon.Response()
             middleware.process_request(sealed(malformed), rep)
             assert rep.complete is True
@@ -797,6 +793,19 @@ def test_authentication_middleware(mockHelpingNowUTC):
 
     mockESSRAuthN.reset_mock()
     mockESSRAuthN.inbound.side_effect = ValueError()
+
+    req = create_req(method="POST", path="/")
+    rep = falcon.Response()
+
+    vc.process_request(req, rep)
+    mockESSRAuthN.inbound.assert_called_once()
+    assert rep.complete is True
+    assert rep.status == falcon.HTTP_401
+
+    mockESSRAuthN.reset_mock()
+    mockESSRAuthN.inbound.side_effect = UnicodeDecodeError(
+        "utf-8", b"\xff", 0, 1, "invalid start byte"
+    )
 
     req = create_req(method="POST", path="/")
     rep = falcon.Response()

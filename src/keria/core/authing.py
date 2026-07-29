@@ -259,10 +259,7 @@ class ESSRAuthenticator(Authenticator):
             raise kering.AuthNError("Signature invalid")
 
         # The real HTTP request is the plaintext of the body of the wrapper to POST /
-        try:
-            environ = self.buildEnviron(agent.agentHab.decrypt(ser=cipher))
-        except ValueError as ex:  # includes UnicodeDecodeError on a non UTF-8 head
-            raise kering.AuthNError(f"Invalid ESSR payload: {ex}")
+        environ = self.buildEnviron(agent.agentHab.decrypt(ser=cipher))
 
         # ESSR "Encrypt Sender"
         if (
@@ -454,7 +451,7 @@ class AuthenticationMiddleware:
         try:
             authenticator.inbound(req)
             return
-        except (kering.AuthNError, ValueError):
+        except (kering.AuthNError, ValueError, UnicodeDecodeError):
             pass
 
         rep.complete = (
